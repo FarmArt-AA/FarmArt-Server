@@ -1,19 +1,12 @@
 /*
 
 !/src/
-!/drawing-conversion-api/
-!/timwork-api/
-!/timwork-mock-api/
-!/common/
-!/authentication/
-!/construction-base/
-!/construct-inspection/
 !/gradle
 !/.gitignore
 !/build.gradle
 !/.github/
-!/timwork-api/Dockerfile
+!Dockerfile
 !/gradle/wrapper/gradle-wrapper.properties
 !/gradle/wrapper/gradle-wrapper.jar
-!/timwork-api/docker-compose.yml
+!docker-compose.yml
 /**/build
