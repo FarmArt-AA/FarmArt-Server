@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:mysql://farm-db-test.cjl4mgclqtca.ap-northeast-2.rds.amazonaws.com:3306/farmtest
+    username: ${DB_USER}
+    password: ${DB_PWD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30
+
+  jpa:
+    generate-ddl: true
+    hibernate: # create: drop-create
+      ddl-auto: update
+      show-sql: true
+  #      naming:
+  #        naming_strategy: org.hibernate.cfg.ImprovedNamingStrategy
+  #        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+springdoc:
+  use-fqn: true
+  api-docs:
+    path: /api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  swagger-ui:
+    version: 3.0.0
+    operations-sorter: alpha
+    tags-sorter: alpha
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+  paths-to-match:
+    - /v1/**
+    #- /test/**
+
+jwt:
+  secret: thisissecretkey01294809180@@12120980@@12120980

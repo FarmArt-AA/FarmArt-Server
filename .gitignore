@@ -10,3 +10,5 @@
 !/gradle/wrapper/gradle-wrapper.jar
 !docker-compose.yml
 /**/build
+
+/src/main/resources/application-local.yml
