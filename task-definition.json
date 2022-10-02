@@ -22,11 +22,11 @@
       "volumesFrom": [],
       "secrets": [
         {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:secret/farmart-db-username-IIHpH1",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:secret/farmart-db-username-IIHpH1:DB_USER",
           "name": "DB_USER"
         },
         {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:secret/farmart-db-password-BDFAQU",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:secret/farmart-db-password-BDFAQU:DB_PWD",
           "name": "DB_PWD"
         }
       ],
