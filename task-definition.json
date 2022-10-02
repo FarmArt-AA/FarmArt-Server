@@ -22,8 +22,12 @@
       "volumesFrom": [],
       "secrets": [
         {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:farmartdb-ho2gfV",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:secret/farmart-db-username-IIHpH1",
           "name": "DB_USER"
+        },
+        {
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:secret/farmart-db-password-BDFAQU",
+          "name": "DB_PWD"
         }
       ],
       "dnsServers": [],
