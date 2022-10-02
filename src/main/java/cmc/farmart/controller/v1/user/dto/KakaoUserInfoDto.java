@@ -9,24 +9,22 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserInfoDto {
-    private String username;
+public class KakaoUserInfoDto {
     private String email;
     private String socialId;
-    private String imgURL;
+    private String profileImageUrl;
     private String refreshToken;
     private SocialType socialType;
 
-    public UserInfoDto(String username, String email, String socialId, SocialType socialType, String imgURL) {
-        this.username = username;
-        this.email = email;
+    // TODO:: 왜 필요한지 의문
+    public KakaoUserInfoDto(String socialId, SocialType socialType, String profileImageUrl) {
         this.socialId = socialId;
         this.socialType = socialType;
-        this.imgURL = imgURL;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public User toEntity(){
-        User user = new User(this.username, this.email, this.socialId, this.imgURL, this.refreshToken, this.socialType);
+        User user = new User(this.email, this.socialId, this.profileImageUrl, this.refreshToken, this.socialType);
         return user;
     }
 }

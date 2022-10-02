@@ -1,7 +1,7 @@
 package cmc.farmart.sevice.user;
 
-import cmc.farmart.controller.v1.user.dto.UserInfoDto;
-import cmc.farmart.controller.v1.user.dto.UserResponseDto;
+import cmc.farmart.controller.v1.user.dto.KakaoUserInfoDto;
+import cmc.farmart.controller.v1.user.dto.KakaoLoginDto;
 import cmc.farmart.domain.user.SocialType;
 import cmc.farmart.entity.User;
 import cmc.farmart.jwt.JwtUtil;
@@ -30,35 +30,37 @@ public class UserLoginService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    public UserResponseDto createToken(String accessToken, HttpServletResponse res) {
+    public KakaoLoginDto createToken(String accessToken, HttpServletResponse res) {
 
-        //AccessToken으로 UserInfo 받기
-        UserInfoDto userInfo = getUserInfo(accessToken);
+        //AccessToken으로 KakaoUserInfo 받기
+        KakaoUserInfoDto kakaoUserInfoDto = getKakaoUserInfo(accessToken);
 
-        Assert.notNull(userInfo.getSocialId(), "유저 정보가 존재합니다.");
+        // 사용자 존재 여부 체크
+        Assert.notNull(kakaoUserInfoDto.getSocialId(), "유저 정보가 존재하지 않습니다..");
 
-        TokenDto tokens = jwtUtil.createToken(userInfo);
-        userInfo.setRefreshToken(tokens.getJwtRefreshToken());
+        // Auth로 받아온 사용자 정보를 jwt에 담는다.
+        TokenDto tokens = jwtUtil.createToken(kakaoUserInfoDto);
+        kakaoUserInfoDto.setRefreshToken(tokens.getJwtRefreshToken());
 
         //socialId 기준으로 DB select하여 User 데이터가 없으면 Insert, 있으면 Update
-        userService.insertOrUpdateUser(userInfo);
+        userService.insertOrUpdateUser(kakaoUserInfoDto);
 
-        Optional<User> userBySocialData = userService.findUserBySocialData(userInfo.getSocialId(), userInfo.getSocialType());
+        Optional<User> userByKakaoSocialData = userService.findUserBySocialData(kakaoUserInfoDto.getSocialId(), kakaoUserInfoDto.getSocialType());
 
-        //UserResponseDto에 userId 추가
-        UserResponseDto userResponseDto = new UserResponseDto(userBySocialData.get().getUserId(), userInfo.getUsername(), userInfo.getEmail(), userInfo.getImgURL());
+        // UserResponseDto에 userId 추가
+        KakaoLoginDto kakaoLoginDto = new KakaoLoginDto(userByKakaoSocialData.get().getUserId(), kakaoUserInfoDto.getEmail(), kakaoUserInfoDto.getProfileImageUrl());
 
         res.addHeader("at-jwt-access-token", tokens.getJwtAccessToken());
         res.addHeader("at-jwt-refresh-token", tokens.getJwtRefreshToken());
 
-        return userResponseDto;
+        return kakaoLoginDto;
 
     }
 
-    private UserInfoDto getUserInfo(String accessToken) {
+    private KakaoUserInfoDto getKakaoUserInfo(String accessToken) {
 
         //UserRequestDto에 정보 받기
-        UserInfoDto userInfo = new UserInfoDto();
+        KakaoUserInfoDto kakaoUserInfoDto = new KakaoUserInfoDto();
 
         try {
             URL url = new URL("https://kapi.kakao.com/v2/user/me");
@@ -88,17 +90,14 @@ public class UserLoginService {
             JsonObject properties = element.getAsJsonObject().get("properties").getAsJsonObject();
             JsonObject kakao_account = element.getAsJsonObject().get("kakao_account").getAsJsonObject();
 
-            String nickname = properties.getAsJsonObject().get("nickname").getAsString();
-            String imgURL = properties.getAsJsonObject().get("profile_image").getAsString();
+            String profileImageUrl = properties.getAsJsonObject().get("profile_image").getAsString();
             String email = kakao_account.getAsJsonObject().get("email").getAsString();
 
             //    UserRequestDto에 값 주입
-            System.out.println("nickname = " + nickname);
-            userInfo.setUsername(nickname);
-            userInfo.setSocialId(kakaoId);
-            userInfo.setEmail(email);
-            userInfo.setImgURL(imgURL);
-            userInfo.setSocialType(SocialType.KAKAO);
+            kakaoUserInfoDto.setSocialId(kakaoId);
+            kakaoUserInfoDto.setEmail(email);
+            kakaoUserInfoDto.setProfileImageUrl(profileImageUrl);
+            kakaoUserInfoDto.setSocialType(SocialType.KAKAO);
 
 
         } catch (IOException e) {   // 잘못된 값 주입하고 에러 터지는 지 Test
@@ -107,6 +106,6 @@ public class UserLoginService {
             return null;    //글로벌 에러 처리할 때 변경
         }
 
-        return userInfo;
+        return kakaoUserInfoDto;
     }
 }

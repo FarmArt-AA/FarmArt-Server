@@ -1,6 +1,6 @@
 package cmc.farmart.sevice.user;
 
-import cmc.farmart.controller.v1.user.dto.UserInfoDto;
+import cmc.farmart.controller.v1.user.dto.KakaoUserInfoDto;
 import cmc.farmart.domain.user.SocialType;
 
 import cmc.farmart.entity.User;
@@ -18,15 +18,15 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public void insertOrUpdateUser(UserInfoDto userInfoDto) {
-        String socialId = userInfoDto.getSocialId();
-        SocialType socialType = userInfoDto.getSocialType();
+    public void insertOrUpdateUser(KakaoUserInfoDto kakaoUserInfoDto) {
+        String socialId = kakaoUserInfoDto.getSocialId();
+        SocialType socialType = kakaoUserInfoDto.getSocialType();
         //처음 로그인 하는 유저면 DB에 insert
         if (Boolean.FALSE.equals(findUserBySocialData(socialId, socialType).isPresent())) {
-            User user = userInfoDto.toEntity(); //기본 Role = ROLE.USER
+            User user = kakaoUserInfoDto.toEntity(); //기본 Role = ROLE.USER
             userRepository.save(user);
         } else { //이미 로그인 했던 유저라면 DB update
-            updateUserBySocialData(userInfoDto);
+            updateUserBySocialData(kakaoUserInfoDto);
         }
     }
 
@@ -36,7 +36,7 @@ public class UserService {
         return user;
     }
 
-    public void updateUserBySocialData(UserInfoDto userInfo) {
-        userRepository.updateUserBySocialIdAndSocialType(userInfo.getUsername(), userInfo.getEmail(), userInfo.getImgURL(), userInfo.getRefreshToken(), userInfo.getSocialId(), userInfo.getSocialType());
+    public void updateUserBySocialData(KakaoUserInfoDto kakaoUserInfoDto) {
+        userRepository.updateUserBySocialIdAndSocialType(kakaoUserInfoDto.getEmail(), kakaoUserInfoDto.getProfileImageUrl(), kakaoUserInfoDto.getRefreshToken(), kakaoUserInfoDto.getSocialId(), kakaoUserInfoDto.getSocialType());
     }
 }
