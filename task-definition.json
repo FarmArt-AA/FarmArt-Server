@@ -24,10 +24,6 @@
         {
           "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:farmartdb-ho2gfV",
           "name": "DB_USER"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:200559315145:secret:farmartdb-ho2gfV",
-          "name": "DB_PWD"
         }
       ],
       "dnsServers": [],
