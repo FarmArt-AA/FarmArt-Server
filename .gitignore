@@ -10,5 +10,5 @@
 !/gradle/wrapper/gradle-wrapper.jar
 !docker-compose.yml
 /**/build
-
+!task-definition.json
 /src/main/resources/application-local.yml
