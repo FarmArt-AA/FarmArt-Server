@@ -18,7 +18,7 @@ public class FarmerProfile {
     private Long farmerProfileId;
 
     @OneToOne(fetch = FetchType.LAZY) // 사용자는 하나의 프로필을 가질 수 있다.;
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "userId")
     User user;
 
     @Column(name = "farmName")
@@ -41,7 +41,7 @@ public class FarmerProfile {
 
     // 재배중인 작물
     @OneToMany(mappedBy = "farmerProfile")
-    private List<Crop> crop;
+    private List<Crop> crops;
 
     // 링크
     @OneToMany(mappedBy = "farmerProfile")

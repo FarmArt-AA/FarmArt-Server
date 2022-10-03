@@ -23,7 +23,7 @@ public class UserService {
         SocialType socialType = kakaoUserInfoDto.getSocialType();
         //처음 로그인 하는 유저면 DB에 insert
         if (Boolean.FALSE.equals(findUserBySocialData(socialId, socialType).isPresent())) {
-            User user = kakaoUserInfoDto.toEntity(); //기본 Role = ROLE.USER
+            User user = kakaoUserInfoDto.toEntity();
             userRepository.save(user);
         } else { //이미 로그인 했던 유저라면 DB update
             updateUserBySocialData(kakaoUserInfoDto);

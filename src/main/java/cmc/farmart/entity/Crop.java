@@ -14,10 +14,6 @@ public class Crop {
     @Column(name = "cropId")
     private Long cropId;
 
-    // TODO:: 사용자와 연관관계를 어떻게 맺을까?
-    @JoinColumn(name = "user_id")
-    private User user;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "farmer_profile_id")
     private FarmerProfile farmerProfile;

@@ -28,7 +28,7 @@ public class User {
     private String phoneNumber;
 
     @Column(name = "userName")
-    private String userName; // 처음에 이름을 받고 nickName으로 활동
+    private String userName; // 사용자 본명
 
     @Column(name = "nickName")
     private String userNickName; // 서비스 활동명
