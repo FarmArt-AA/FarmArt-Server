@@ -10,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "A_FARMER_PROFILE")
 @Entity
-public class FarmerProfile  extends IdentifiableEntity{
+public class FarmerProfile  extends AuditableEntity{
 
     @OneToOne(fetch = FetchType.LAZY) // 사용자는 하나의 프로필을 가질 수 있다.;
     @JoinColumn(name = "userId")

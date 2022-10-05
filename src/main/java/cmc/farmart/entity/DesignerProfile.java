@@ -10,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "A_DESIGNER_PROFILE")
 @Entity
-public class DesignerProfile extends IdentifiableEntity {
+public class DesignerProfile extends AuditableEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")

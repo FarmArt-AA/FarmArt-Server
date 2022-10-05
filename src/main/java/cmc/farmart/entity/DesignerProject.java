@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Table(name = "A_DESIGNER_PROFILE")
 @Entity
-public class DesignerProject extends IdentifiableEntity {
+public class DesignerProject extends AuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "designerProfileId")

@@ -13,12 +13,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Table(name = "A_USER")
 @Entity
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "userId")
-    private Long userId;
+public class User extends AuditableEntity{
 
     @Column(name = "jobTitle")
     @Enumerated(EnumType.STRING) // 농부, 디자이너

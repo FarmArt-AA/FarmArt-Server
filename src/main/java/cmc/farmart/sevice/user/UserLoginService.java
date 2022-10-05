@@ -48,7 +48,7 @@ public class UserLoginService {
         Optional<User> userByKakaoSocialData = userService.findUserBySocialData(kakaoUserInfoDto.getSocialId(), kakaoUserInfoDto.getSocialType());
 
         // UserResponseDto에 userId 추가
-        KakaoLoginDto kakaoLoginDto = new KakaoLoginDto(userByKakaoSocialData.get().getUserId(), kakaoUserInfoDto.getEmail(), kakaoUserInfoDto.getProfileImageUrl());
+        KakaoLoginDto kakaoLoginDto = new KakaoLoginDto(userByKakaoSocialData.get().getId(), kakaoUserInfoDto.getEmail(), kakaoUserInfoDto.getProfileImageUrl());
 
         res.addHeader("at-jwt-access-token", tokens.getJwtAccessToken());
         res.addHeader("at-jwt-refresh-token", tokens.getJwtRefreshToken());

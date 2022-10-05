@@ -7,7 +7,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Table(name = "A_CROP")
 @Entity
-public class Crop extends IdentifiableEntity {
+public class Crop extends AuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "farmer_profile_id")
