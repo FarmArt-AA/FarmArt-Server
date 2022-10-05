@@ -25,7 +25,7 @@ public class UserConfirmation extends AuditableEntity{
 
     private String ipAddress;
 
-    @OneToMany(mappedBy = "termsName")
+    @OneToMany(mappedBy = "confirmationType")
     List<UserConfirmationType> typeList;
 
 }
