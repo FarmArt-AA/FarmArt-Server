@@ -7,12 +7,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Table(name = "A_CROP")
 @Entity
-public class Crop {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cropId")
-    private Long cropId;
+public class Crop extends IdentifiableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "farmer_profile_id")

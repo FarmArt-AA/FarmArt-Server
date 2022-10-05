@@ -10,12 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "A_FARMER_PROFILE")
 @Entity
-public class FarmerProfile {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "farmerProfileId")
-    private Long farmerProfileId;
+public class FarmerProfile  extends IdentifiableEntity{
 
     @OneToOne(fetch = FetchType.LAZY) // 사용자는 하나의 프로필을 가질 수 있다.;
     @JoinColumn(name = "userId")

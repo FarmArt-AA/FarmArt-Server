@@ -10,12 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Table(name = "A_DESIGNER_PROFILE")
 @Entity
-public class DesignerProject {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "designerProjectId")
-    private Long designerProjectId;
+public class DesignerProject extends IdentifiableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "designerProfileId")

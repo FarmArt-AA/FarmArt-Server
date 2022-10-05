@@ -7,13 +7,8 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Table(name = "A_PROFILE_LINK")
 @Entity
-public class ProfileLink {
+public class ProfileLink extends IdentifiableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long profileLinkId;
-
-    // Farmer Profile과 연관관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "farmer_profile_id")
     private FarmerProfile farmerProfile;

@@ -10,12 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "A_DESIGNER_PROFILE")
 @Entity
-public class DesignerProfile {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "designerProfileId")
-    private Long designerProfileId;
+public class DesignerProfile extends IdentifiableEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
@@ -32,7 +27,6 @@ public class DesignerProfile {
     // 디자이너 프로젝트
     @OneToMany(mappedBy = "designerProfile")
     List<DesignerProject> designerProjects;
-
 
 
 }

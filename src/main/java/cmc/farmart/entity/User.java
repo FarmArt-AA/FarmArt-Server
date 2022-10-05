@@ -30,7 +30,7 @@ public class User {
     @Column(name = "userName")
     private String userName; // 사용자 본명
 
-    @Column(name = "nickName")
+    @Column(name = "userNickName")
     private String userNickName; // 서비스 활동명
 
     @Column(name = "email")
