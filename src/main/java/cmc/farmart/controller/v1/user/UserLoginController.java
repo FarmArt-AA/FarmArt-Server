@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
@@ -25,7 +26,8 @@ public class UserLoginController {
     public ResponseEntity<KakaoLoginDto> kakaoLogin(
             @Parameter(description = "kakaoAccessToken") @RequestHeader("oauthToken") String accessToken,
             @Valid @RequestBody KakaoLoginSignUpDto.Reqeust reqeust,
-            HttpServletResponse res) {
-        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.signUp(accessToken, reqeust, res));
+            HttpServletResponse hsrep,
+            HttpServletRequest hsreq) {
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.signUp(accessToken, reqeust, hsrep, hsreq));
     }
 }

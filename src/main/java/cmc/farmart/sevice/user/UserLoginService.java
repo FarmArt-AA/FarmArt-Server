@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,7 +38,7 @@ public class UserLoginService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    public KakaoLoginDto signUp(final String accessToken, final KakaoLoginSignUpDto.Reqeust reqeust, final HttpServletResponse res) {
+    public KakaoLoginDto signUp(final String accessToken, final KakaoLoginSignUpDto.Reqeust reqeust, final HttpServletResponse hsresp, final HttpServletRequest hsreq) {
 
         // 필수 약관 동의 validation
         verifyConfirmation(reqeust.getConfirmationTypes());
@@ -59,15 +60,17 @@ public class UserLoginService {
         kakaoUserInfoVo.setPhoneNumber(reqeust.getPhoneNumber());
 
         //socialId 기준으로 DB select하여 User 데이터가 없으면 Insert, 있으면 Update
-        userService.insertOrUpdateUser(kakaoUserInfoVo);
+        User user = userService.insertOrUpdateUser(kakaoUserInfoVo);
+
+        userService.insertConfirmation(reqeust.getConfirmationTypes(), user, hsreq.getRemoteAddr());
 
         Optional<User> userByKakaoSocialData = userService.findUserBySocialData(kakaoUserInfoVo.getSocialId(), kakaoUserInfoVo.getSocialType());
 
         // UserResponseDto에 userId 추가
         KakaoLoginDto kakaoLoginDto = new KakaoLoginDto(userByKakaoSocialData.get().getId(), kakaoUserInfoVo.getEmail(), kakaoUserInfoVo.getProfileImageUrl());
 
-        res.addHeader("at-jwt-access-token", tokens.getJwtAccessToken());
-        res.addHeader("at-jwt-refresh-token", tokens.getJwtRefreshToken());
+        hsresp.addHeader("at-jwt-access-token", tokens.getJwtAccessToken());
+        hsresp.addHeader("at-jwt-refresh-token", tokens.getJwtRefreshToken());
 
         return kakaoLoginDto;
 
