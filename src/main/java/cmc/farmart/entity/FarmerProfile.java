@@ -14,7 +14,7 @@ public class FarmerProfile  extends AuditableEntity{
 
     @OneToOne(fetch = FetchType.LAZY) // 사용자는 하나의 프로필을 가질 수 있다.;
     @JoinColumn(name = "a_user_id")
-    User user;
+    private User user;
 
     @Column(name = "farm_name")
     private String farmName; // 농가명
@@ -40,7 +40,7 @@ public class FarmerProfile  extends AuditableEntity{
 
     // 링크
     @OneToMany(mappedBy = "farmerProfile")
-    List<ProfileLink> profileLinks;
+    private List<ProfileLink> profileLinks;
 
 
 

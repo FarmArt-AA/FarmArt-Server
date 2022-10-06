@@ -17,11 +17,11 @@ public class UserConfirmation extends AuditableEntity{
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "a_user_id")
-    User user;
+    private User user;
 
     @Column(name = "user_confirmation_type")
     @Enumerated(EnumType.STRING)
-    ConfirmationType confirmationType;
+    private ConfirmationType confirmationType;
 
     private String ipAddress;
 
