@@ -62,6 +62,7 @@ public class UserLoginService {
         //socialId 기준으로 DB select하여 User 데이터가 없으면 Insert, 있으면 Update
         User user = userService.insertOrUpdateUser(kakaoUserInfoVo);
 
+        // 동의 약관 저장
         userService.insertConfirmation(reqeust.getConfirmationTypes(), user, hsreq.getRemoteAddr());
 
         Optional<User> userByKakaoSocialData = userService.findUserBySocialData(kakaoUserInfoVo.getSocialId(), kakaoUserInfoVo.getSocialType());
@@ -76,6 +77,7 @@ public class UserLoginService {
 
     }
 
+    // 필수 동의 약관만 check
     private void verifyConfirmation(final Set<ConfirmationType> userConfirmationTypes) {
         if (Boolean.FALSE.equals(Arrays.stream(ConfirmationType.values())
                 .filter(confirmation -> confirmation.required().equals(Boolean.TRUE))
