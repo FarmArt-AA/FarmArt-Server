@@ -1,8 +1,11 @@
 package cmc.farmart.sevice.user;
 
+import cmc.farmart.common.exception.FarmartException;
+import cmc.farmart.common.exception.Status;
 import cmc.farmart.controller.v1.user.dto.KakaoLoginDto;
 import cmc.farmart.controller.v1.user.dto.KakaoLoginSignUpDto;
 import cmc.farmart.controller.v1.user.dto.KakaoUserInfoVo;
+import cmc.farmart.domain.user.ConfirmationType;
 import cmc.farmart.domain.user.JobTitle;
 import cmc.farmart.domain.user.SocialType;
 import cmc.farmart.entity.User;
@@ -22,7 +25,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -33,6 +38,9 @@ public class UserLoginService {
     private final UserService userService;
 
     public KakaoLoginDto signUp(final String accessToken, final KakaoLoginSignUpDto.Reqeust reqeust, final HttpServletResponse res) {
+
+        // 필수 약관 동의 validation
+        verifyConfirmation(reqeust.getConfirmationTypes());
 
         //AccessToken으로 KakaoUserInfo 받기
         KakaoUserInfoVo kakaoUserInfoVo = getKakaoUserInfo(accessToken);
@@ -62,6 +70,15 @@ public class UserLoginService {
         res.addHeader("at-jwt-refresh-token", tokens.getJwtRefreshToken());
 
         return kakaoLoginDto;
+
+    }
+
+    private void verifyConfirmation(final Set<ConfirmationType> userConfirmationTypes) {
+        if (Boolean.FALSE.equals(Arrays.stream(ConfirmationType.values())
+                .filter(confirmation -> confirmation.required().equals(Boolean.TRUE))
+                .allMatch(type -> userConfirmationTypes.stream().anyMatch(userConfirmationType -> userConfirmationType.equals(type))))) {
+            throw new FarmartException(Status.CONFIRMATION_REQUIRED_TERMS);
+        }
 
     }
 
