@@ -13,12 +13,12 @@ public class Crop extends AuditableEntity {
     @JoinColumn(name = "farmer_profile_id")
     private FarmerProfile farmerProfile;
 
-    @Column(name = "cropImage1")
+    @Column(name = "crop_image1")
     private String cropImage1;
 
-    @Column(name = "cropImage2")
+    @Column(name = "crop_image2")
     private String cropImage2;
 
-    @Column(name = "cropImage3")
+    @Column(name = "crop_image3")
     private String cropImage3;
 }

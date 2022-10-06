@@ -1,10 +1,7 @@
 package cmc.farmart.entity;
 
 import cmc.farmart.domain.user.ConfirmationType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
 
@@ -13,7 +10,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class UserConfirmationType extends IdentifiableEntity {
 
-    @Column(name = "termsName")
+    @Column(name = "term_name")
     @Enumerated(EnumType.STRING)
     private ConfirmationType confirmationType; // 약관 동의 내용
 

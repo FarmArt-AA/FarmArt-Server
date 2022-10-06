@@ -13,25 +13,25 @@ import java.util.List;
 public class FarmerProfile  extends AuditableEntity{
 
     @OneToOne(fetch = FetchType.LAZY) // 사용자는 하나의 프로필을 가질 수 있다.;
-    @JoinColumn(name = "userId")
+    @JoinColumn(name = "a_user_id")
     User user;
 
-    @Column(name = "farmName")
+    @Column(name = "farm_name")
     private String farmName; // 농가명
 
-    @Column(name = "farmLocation")
+    @Column(name = "farm_location")
     private String farmLocation; // 농사 지역
 
-    @Column(name = "farmIntro")
+    @Column(name = "farm_intro")
     private String farmIntroduce; // 농가 소개
 
-    @Column(name = "farmImage1")
+    @Column(name = "farm_image1")
     private String farmImage1;
 
-    @Column(name = "farmImage2")
+    @Column(name = "farm_image2")
     private String farmImage2;
 
-    @Column(name = "farmImage3")
+    @Column(name = "farm_image3")
     private String farmImage3;
 
     // 재배중인 작물

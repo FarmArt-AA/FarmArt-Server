@@ -13,20 +13,25 @@ import java.util.List;
 public class DesignerProfile extends AuditableEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId")
-    User user;
+    @JoinColumn(name = "a_user_id")
+    private User user;
 
+    @Column(name = "designer_profile_title")
     private String designerProfileTitle;
 
+    @Column(name = "designer_profile_profile_introduce")
     private String designerProfileProfileIntroduce;
 
     // 작업분야
+    @OneToMany(mappedBy = "designerWorkAreaType")
+    private List<DesignerWorkArea> designerWorkAreaTypes;
 
+    @Column(name = "designer_profile_image_url")
     private String designerProfileImageUrl;
 
     // 디자이너 프로젝트
     @OneToMany(mappedBy = "designerProfile")
-    List<DesignerProject> designerProjects;
+    private List<DesignerProject> designerProjects;
 
 
 }

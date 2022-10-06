@@ -16,16 +16,13 @@ import java.util.List;
 public class UserConfirmation extends AuditableEntity{
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId")
+    @JoinColumn(name = "a_user_id")
     User user;
 
-    @Column(name = "user_confirmation_type_id")
-    @Enumerated(EnumType.ORDINAL) // 약관 동의는 추가 변경할 경우가 적기 때문에 ordinal을 선택.
+    @Column(name = "user_confirmation_type")
+    @Enumerated(EnumType.STRING)
     ConfirmationType confirmationType;
 
     private String ipAddress;
-
-    @OneToMany(mappedBy = "confirmationType")
-    List<UserConfirmationType> typeList;
 
 }

@@ -1,5 +1,6 @@
 package cmc.farmart.sevice.user;
 
+import cmc.farmart.controller.v1.user.dto.KakaoLoginSignUpDto;
 import cmc.farmart.controller.v1.user.dto.KakaoUserInfoDto;
 import cmc.farmart.controller.v1.user.dto.KakaoLoginDto;
 import cmc.farmart.domain.user.SocialType;
@@ -30,7 +31,7 @@ public class UserLoginService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    public KakaoLoginDto createToken(String accessToken, HttpServletResponse res) {
+    public KakaoLoginDto createToken(String accessToken, KakaoLoginSignUpDto.Reqeust kakaoLoginSignUpDto, HttpServletResponse res) {
 
         //AccessToken으로 KakaoUserInfo 받기
         KakaoUserInfoDto kakaoUserInfoDto = getKakaoUserInfo(accessToken);

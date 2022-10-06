@@ -11,7 +11,7 @@ import javax.persistence.*;
 @Entity
 public class DesignerWorkArea extends IdentifiableEntity {
 
-    @Column(name = "designerWorkAreaType")
+    @Column(name = "designer_work_area_type")
     @Enumerated(EnumType.STRING)
     private DesignerWorkAreaType designerWorkAreaType;
 }

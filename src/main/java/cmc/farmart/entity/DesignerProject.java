@@ -13,27 +13,27 @@ import java.time.LocalDateTime;
 public class DesignerProject extends AuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "designerProfileId")
+    @JoinColumn(name = "designer_profile_id")
     private DesignerProfile designerProfile;
 
-    @Column(name = "designerProjectTitle")
+    @Column(name = "designer_project_title")
     private String designerProjectTitle;
 
-    @Column(name = "designerProjectStartDate")
+    @Column(name = "designer_project_start_date")
     private LocalDateTime designerProjectStartDate;
 
-    @Column(name = "designerProjectEndDate")
+    @Column(name = "designer_projectEndDate")
     private LocalDateTime designerProjectEndDate;
 
-    @Column(name = "designerProjectIntroduce")
+    @Column(name = "designer_projectIntroduce")
     private String designerProjectIntroduce;
 
-    @Column(name = "designerProjectImageUrl1")
+    @Column(name = "designer_projectImageUrl1")
     private String designerProjectImageUrl1;
 
-    @Column(name = "designerProjectImageUrl2")
+    @Column(name = "designer_projectImageUrl2")
     private String designerProjectImageUrl2;
 
-    @Column(name = "designerProjectImageUrl3")
+    @Column(name = "designer_projectImageUrl3")
     private String designerProjectImageUrl3;
 }
