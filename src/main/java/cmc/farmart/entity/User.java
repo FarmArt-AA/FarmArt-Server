@@ -13,7 +13,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Table(name = "A_USER")
 @Entity
-public class User extends AuditableEntity{
+public class User extends AuditableEntity {
 
     @Column(name = "job_title")
     @Enumerated(EnumType.STRING) // 농부, 디자이너
@@ -44,11 +44,15 @@ public class User extends AuditableEntity{
     @Column(name = "refresh_token", nullable = false)
     private String refreshToken;
 
-    public User(String email, String socialId, String profileImageUrl, String refreshToken, SocialType socialType) {
+    public User(String userName, String userNickName, String email, String socialId, String profileImageUrl, String refreshToken, SocialType socialType, String phoneNumber, JobTitle jobTitle) {
+        this.userName = userName;
+        this.userNickName = userNickName;
         this.email = email;
         this.socialId = socialId;
         this.profileImageUrl = profileImageUrl;
         this.refreshToken = refreshToken;
         this.socialType = socialType;
+        this.phoneNumber = phoneNumber;
+        this.jobTitle = jobTitle;
     }
 }

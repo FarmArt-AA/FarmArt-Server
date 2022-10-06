@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 @RequestMapping("/v1/user-login")
 @RequiredArgsConstructor
@@ -23,8 +24,8 @@ public class UserLoginController {
     @PostMapping("/kakao")
     public ResponseEntity<KakaoLoginDto> kakaoLogin(
             @Parameter(description = "kakaoAccessToken") @RequestHeader("oauthToken") String accessToken,
-            @RequestBody KakaoLoginSignUpDto.Reqeust kakaoLoginSignUpDto,
+            @Valid @RequestBody KakaoLoginSignUpDto.Reqeust reqeust,
             HttpServletResponse res) {
-        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.createToken(accessToken,kakaoLoginSignUpDto, res));
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.signUp(accessToken, reqeust, res));
     }
 }
