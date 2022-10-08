@@ -25,6 +25,7 @@ dependencies {
 
     //TODO:: JPA + DB
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 //    runtimeOnly 'mysql:mysql-connector-java'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.0.6'
 
@@ -42,6 +43,10 @@ dependencies {
 
     //TODO:: Swagger
     implementation "org.springdoc:springdoc-openapi-ui:${springDocOpenApiVersion}"
+
+    // AWS S3
+    implementation 'software.amazon.awssdk:s3:2.17.152'
+//    implementation 'com.amazonaws:aws-java-sdk-core:1.12.111'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

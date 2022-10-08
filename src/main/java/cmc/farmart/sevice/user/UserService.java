@@ -22,17 +22,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserConfirmationRepository userConfirmationRepository;
 
-    public User insertOrUpdateUser(KakaoUserInfoVo kakaoUserInfoVo) {
+    public void insertOrUpdateUser(final Set<ConfirmationType> confirmationTypes, final String ipAddress, KakaoUserInfoVo kakaoUserInfoVo) {
         String socialId = kakaoUserInfoVo.getSocialId();
         SocialType socialType = kakaoUserInfoVo.getSocialType();
-        //처음 로그인 하는 유저면 DB에 insert
+
+        //처음 로그인 하는 유저면 DB에 insert(회원 가입)
         User user = kakaoUserInfoVo.toEntity();
         if (Boolean.FALSE.equals(findUserBySocialData(socialId, socialType).isPresent())) {
-            userRepository.save(user);
+            userRepository.save(user); // 사용자 회원 가입
+            insertConfirmation(confirmationTypes, user, ipAddress); // 약관 동의 저장
         } else { //이미 로그인 했던 유저라면 DB update
             updateUserBySocialData(kakaoUserInfoVo);
         }
-        return user;
     }
 
     public void insertConfirmation(final Set<ConfirmationType> confirmationTypes, final User user, final String ipAddress) {
@@ -45,7 +46,6 @@ public class UserService {
             userConfirmationRepository.save(userConfirmation);
         });
     }
-
 
     public Optional<User> findUserBySocialData(String socialId, SocialType socialType) {
         Optional<User> user = userRepository.findBySocialIdAndSocialType(socialId, socialType);

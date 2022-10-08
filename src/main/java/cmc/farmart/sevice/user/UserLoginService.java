@@ -38,10 +38,10 @@ public class UserLoginService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    public KakaoLoginDto signUp(final String accessToken, final KakaoLoginSignUpDto.Reqeust reqeust, final HttpServletResponse hsresp, final HttpServletRequest hsreq) {
+    public KakaoLoginDto signUp(final String accessToken, final KakaoLoginSignUpDto.Request request, final HttpServletResponse hsresp, final HttpServletRequest hsreq) {
 
         // 필수 약관 동의 validation
-        verifyConfirmation(reqeust.getConfirmationTypes());
+        verifyConfirmation(request.getConfirmationTypes());
 
         //AccessToken으로 KakaoUserInfo 받기
         KakaoUserInfoVo kakaoUserInfoVo = getKakaoUserInfo(accessToken);
@@ -54,16 +54,13 @@ public class UserLoginService {
         kakaoUserInfoVo.setRefreshToken(tokens.getJwtRefreshToken());
 
         // 사용자 이름, 닉네임 저장
-        kakaoUserInfoVo.setUserName(reqeust.getUserName());
-        kakaoUserInfoVo.setUserNickName(reqeust.getUserNickName());
-        kakaoUserInfoVo.setJobtitle(JobTitle.valueOf(reqeust.getJobTitle()));
-        kakaoUserInfoVo.setPhoneNumber(reqeust.getPhoneNumber());
+        kakaoUserInfoVo.setUserName(request.getUserName());
+        kakaoUserInfoVo.setUserNickName(request.getUserNickName());
+        kakaoUserInfoVo.setJobtitle(JobTitle.valueOf(request.getJobTitle()));
+        kakaoUserInfoVo.setPhoneNumber(request.getPhoneNumber());
 
         //socialId 기준으로 DB select하여 User 데이터가 없으면 Insert, 있으면 Update
-        User user = userService.insertOrUpdateUser(kakaoUserInfoVo);
-
-        // 동의 약관 저장
-        userService.insertConfirmation(reqeust.getConfirmationTypes(), user, hsreq.getRemoteAddr());
+        userService.insertOrUpdateUser(request.getConfirmationTypes(), hsreq.getRemoteAddr(), kakaoUserInfoVo);
 
         Optional<User> userByKakaoSocialData = userService.findUserBySocialData(kakaoUserInfoVo.getSocialId(), kakaoUserInfoVo.getSocialType());
 

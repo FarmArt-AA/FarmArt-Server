@@ -3,22 +3,23 @@ package cmc.farmart.entity;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @NoArgsConstructor
 @Table(name = "A_CROP")
 @Entity
-public class Crop extends AuditableEntity {
+public class Crop extends AuditableEntity { // 재배중인 작물
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "farmer_profile_id")
+    @JoinColumn(name = "a_farmer_profile_id")
     private FarmerProfile farmerProfile;
 
-    @Column(name = "crop_image1")
-    private String cropImage1;
+    @Column(name = "crop_name")
+    private String cropName;
 
-    @Column(name = "crop_image2")
-    private String cropImage2;
+    @Column(name = "crop_description")
+    private String cropDescription;
 
-    @Column(name = "crop_image3")
-    private String cropImage3;
+    @OneToMany(mappedBy = "cropImagePath")
+    private List<CropImage> cropImages;
 }

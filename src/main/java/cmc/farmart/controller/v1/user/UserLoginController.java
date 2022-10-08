@@ -25,9 +25,9 @@ public class UserLoginController {
     @PostMapping("/kakao")
     public ResponseEntity<KakaoLoginDto> kakaoLogin(
             @Parameter(description = "kakaoAccessToken") @RequestHeader("oauthToken") String accessToken,
-            @Valid @RequestBody KakaoLoginSignUpDto.Reqeust reqeust,
+            @Valid @RequestBody KakaoLoginSignUpDto.Request request,
             HttpServletResponse hsrep,
             HttpServletRequest hsreq) {
-        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.signUp(accessToken, reqeust, hsrep, hsreq));
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.signUp(accessToken, request, hsrep, hsreq));
     }
 }

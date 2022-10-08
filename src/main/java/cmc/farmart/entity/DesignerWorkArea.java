@@ -11,6 +11,10 @@ import javax.persistence.*;
 @Entity
 public class DesignerWorkArea extends IdentifiableEntity {
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "desinger_profile_id")
+    private DesignerProfile designerProfile;
+
     @Column(name = "designer_work_area_type")
     @Enumerated(EnumType.STRING)
     private DesignerWorkAreaType designerWorkAreaType;
