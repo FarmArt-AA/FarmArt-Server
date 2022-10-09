@@ -1,5 +1,6 @@
-package cmc.farmart.entity;
+package cmc.farmart.entity.farmer;
 
+import cmc.farmart.entity.AuditableEntity;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;

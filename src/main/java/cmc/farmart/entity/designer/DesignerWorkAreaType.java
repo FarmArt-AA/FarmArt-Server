@@ -1,4 +1,4 @@
-package cmc.farmart.entity;
+package cmc.farmart.entity.designer;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,4 +21,4 @@ public enum DesignerWorkAreaType {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 작업 분야입니다."));
     }
-    }
+}

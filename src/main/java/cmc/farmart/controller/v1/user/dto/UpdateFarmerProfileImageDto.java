@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 public class UpdateFarmerProfileImageDto {
@@ -15,10 +14,10 @@ public class UpdateFarmerProfileImageDto {
     public static class Request {
 
         @NotNull(message = "선택된 파일이 없습니다.")
-        @Schema(description = "농부 프로필 이미지 필수", required = true)
+        @Schema(description = "농부 프로필 이미지 필수", required = true, type = "file")
         private MultipartFile file;
 
-        @NotBlank(message = "사용자 PK 필수")
+        @NotNull(message = "사용자 PK 필수")
         @Schema(description = "사용자 PK")
         private Long userId;
     }

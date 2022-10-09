@@ -4,17 +4,20 @@ import cmc.farmart.domain.user.ConfirmationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.Set;
 
 public class KakaoLoginSignUpDto {
 
     @Getter
-    public static class Reqeust {
+    public static class Request {
 
-        @NotBlank(message = "약관 '필수 동의' 필수")
-        @Schema(description = "약관 동의 목록")
+        @Valid
+        @NotNull(message = "약관 '필수 동의' 필수")
+        @Schema(description = "약관 동의 목록: [SERVICE(필수 동의), PRIVACY(필수 동의), PROMOTION(선택 동의)]")
         Set<ConfirmationType> confirmationTypes;
 
         @NotBlank(message = "사용자 이름 필수")

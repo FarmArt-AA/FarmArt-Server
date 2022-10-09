@@ -55,4 +55,9 @@ public class User extends AuditableEntity {
         this.phoneNumber = phoneNumber;
         this.jobTitle = jobTitle;
     }
+
+    // 마이페이지 사용자 닉네임 변경 감지
+    public void setUserNickName(String userNickName) {
+        this.userNickName = userNickName;
+    }
 }

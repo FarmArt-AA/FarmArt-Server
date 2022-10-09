@@ -1,5 +1,7 @@
-package cmc.farmart.entity;
+package cmc.farmart.entity.designer;
 
+import cmc.farmart.entity.AuditableEntity;
+import cmc.farmart.entity.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

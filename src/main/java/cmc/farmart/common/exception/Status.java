@@ -30,7 +30,6 @@ public enum Status {
     REQUIRE_FILE(400, "8L8ZZ", "파일 필수"),
     WITHOUT_FILE_EXTENSION(400, "Y1L0W", "확장자가 없는 파일"),
     BLOCKING_USER(401, "HI2FB", "서비스 이용 불가능 사용자"),
-    EXIST_TIMWORK_ACCOUNT(401, "K9UFV", "팀워크 계정 존재"),
     CHECK_TEXT_LENGTH(400, "QC3P7", "텍스트 입력 조건 확인"),
     EXIST_TEXT(400, "N7L8U", "텍스트 존재"),
     REFRESH_TOKEN_REISSUE_AFTER_3_DAYS(400, "HO4HM", "리프레시 토큰 발급 3일 경과 후, 재발급 가능"),
