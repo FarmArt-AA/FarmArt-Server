@@ -6,10 +6,11 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
-@Table(name = "A_DESIGNER_PROFILE")
+@Table(name = "A_DESIGNER_PROJECT")
 @Entity
 public class DesignerProject extends AuditableEntity {
 
@@ -29,12 +30,10 @@ public class DesignerProject extends AuditableEntity {
     @Column(name = "designer_projectIntroduce")
     private String designerProjectIntroduce;
 
-    @Column(name = "designer_projectImageUrl1")
-    private String designerProjectImageUrl1;
+    @OneToMany(mappedBy = "designerProject")
+    private List<DesignerProjectImage> designerProjectImages;
 
-    @Column(name = "designer_projectImageUrl2")
-    private String designerProjectImageUrl2;
-
-    @Column(name = "designer_projectImageUrl3")
-    private String designerProjectImageUrl3;
+    public DesignerProject(DesignerProfile designerProfile) {
+        this.designerProfile = designerProfile;
+    }
 }

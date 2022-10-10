@@ -23,4 +23,8 @@ public class Crop extends AuditableEntity { // 재배중인 작물
 
     @OneToMany(mappedBy = "cropImagePath")
     private List<CropImage> cropImages;
+
+    public Crop(FarmerProfile farmerProfile) {
+        this.farmerProfile = farmerProfile;
+    }
 }

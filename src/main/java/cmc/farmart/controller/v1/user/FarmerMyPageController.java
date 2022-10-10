@@ -1,8 +1,6 @@
 package cmc.farmart.controller.v1.user;
 
-import cmc.farmart.controller.v1.user.dto.GetFarmerProfileIntroduceDto;
-import cmc.farmart.controller.v1.user.dto.UpdateFarmerProfileImageDto;
-import cmc.farmart.controller.v1.user.dto.UpdateFarmerProfileIntroduceDto;
+import cmc.farmart.controller.v1.user.dto.*;
 import cmc.farmart.sevice.user.FarmerMyPageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -44,6 +42,18 @@ public class FarmerMyPageController {
             @RequestBody UpdateFarmerProfileIntroduceDto.Request request,
             @PathVariable String userId) {
         return ResponseEntity.status(HttpStatus.OK).body(farmerMyPageService.updateFarmerProfileIntroduce(userId, request));
+    }
+
+    @Operation(summary = "농부 재배중인 작물 조회")
+    @GetMapping("/{userId}/crop")
+    public ResponseEntity<GetCropDto.Response> getFarmerCrops(@PathVariable String userId) {
+        return ResponseEntity.status(HttpStatus.OK).body(farmerMyPageService.getFarmerCrops(userId));
+    }
+
+    @Operation(summary = "농부 재배중인 작물 추가하기")
+    @PostMapping("/{userId}/crop")
+    public ResponseEntity<CreateCropDto.Response> createFarmerCrop(@PathVariable String userId, CreateCropDto.Request request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(farmerMyPageService.createFarmerCrop(userId, request));
     }
 
 }

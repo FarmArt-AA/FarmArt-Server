@@ -2,25 +2,27 @@ package cmc.farmart.sevice.user;
 
 import cmc.farmart.common.exception.FarmartException;
 import cmc.farmart.common.exception.Status;
-import cmc.farmart.controller.v1.user.dto.GetFarmerProfileIntroduceDto;
-import cmc.farmart.controller.v1.user.dto.UpdateFarmerProfileImageDto;
-import cmc.farmart.controller.v1.user.dto.UpdateFarmerProfileIntroduceDto;
+import cmc.farmart.controller.v1.user.dto.*;
 import cmc.farmart.entity.FileExtensionType;
 import cmc.farmart.entity.User;
+import cmc.farmart.entity.farmer.Crop;
 import cmc.farmart.entity.farmer.FarmerProfile;
+import cmc.farmart.repository.user.FarmerCropRepository;
 import cmc.farmart.repository.user.FarmerProfileRepository;
 import cmc.farmart.repository.user.UserRepository;
 import cmc.farmart.sevice.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -33,6 +35,10 @@ public class FarmerMyPageService {
     private final S3Service s3Service;
     private final UserRepository userRepository;
     private final FarmerProfileRepository farmerProfileRepository;
+    private final FarmerCropRepository farmerCropRepository;
+
+    private final ModelMapper modelMapper;
+
 
     @Value("${farmart.project.document.bucket}")
     private String bucketName;
@@ -76,16 +82,17 @@ public class FarmerMyPageService {
     }
 
     public GetFarmerProfileIntroduceDto.Response getFarmerProfileIntroduce(String userId) { // 농부 프로필 닉네임 ~ 소개 조회 API
-        User user = getUserById(Long.parseLong(userId));
 
-        Optional<FarmerProfile> farmerProfile = farmerProfileRepository.findByUser(user); // 농부 프로필 조회
+        User user = getUserById(Long.parseLong(userId));
+        FarmerProfile farmerProfile = getFarmerProfileByUser(user); // 농부 프로필 조회
+
         return responseFarmerProfileIntroduceDto(user, farmerProfile);
     }
 
     public UpdateFarmerProfileIntroduceDto.Response updateFarmerProfileIntroduce(String userId, UpdateFarmerProfileIntroduceDto.Request request) {
 
         User user = getUserById(Long.parseLong(userId));
-        FarmerProfile farmerProfile = getFarmerProfile(user);
+        FarmerProfile farmerProfile = getFarmerProfileByUser(user);
 
         // farmerProfile 값을 update
         user.setUserNickName(request.getNickName()); // 사용자 닉네임 변경
@@ -100,7 +107,7 @@ public class FarmerMyPageService {
                 .build();
     }
 
-    private FarmerProfile getFarmerProfile(User user) {
+    private FarmerProfile getFarmerProfileByUser(User user) {
         return farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.NOT_FOUND));
     }
 
@@ -133,20 +140,46 @@ public class FarmerMyPageService {
         }
     }
 
-    private GetFarmerProfileIntroduceDto.Response responseFarmerProfileIntroduceDto(User user, Optional<FarmerProfile> farmerProfile) {
-        if (farmerProfile.isPresent()) { // 이미 프로필 정보가 있다면
-            return GetFarmerProfileIntroduceDto.Response.builder()
-                    .nickName(user.getUserNickName())
-                    .farmLocation(farmerProfile.get().getFarmLocation())
-                    .farmLocation(farmerProfile.get().getFarmLocation())
-                    .introduce(farmerProfile.get().getFarmIntroduce())
-                    .build();
-        } else { // 프로필에 대한 정보가 없다면
-            FarmerProfile newFarmerProfile = new FarmerProfile(user);
-            farmerProfileRepository.save(newFarmerProfile);
-            return GetFarmerProfileIntroduceDto.Response.builder()
-                    .nickName(user.getUserNickName())
-                    .build();
-        }
+    private GetFarmerProfileIntroduceDto.Response responseFarmerProfileIntroduceDto(User user, FarmerProfile farmerProfile) {
+        return GetFarmerProfileIntroduceDto.Response.builder()
+                .nickName(user.getUserNickName())
+                .farmName(farmerProfile.getFarmName())
+                .farmLocation(farmerProfile.getFarmLocation())
+                .introduce(farmerProfile.getFarmIntroduce())
+                .build();
+    }
+
+    public CreateCropDto.Response createFarmerCrop(String userId, CreateCropDto.Request request) {
+
+        User user = getUserById(Long.parseLong(userId));
+        FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+
+        // farmerProfile에 재배중인 작물 리스트에 추가.
+
+        // request로부터 값을 받아서 list로 만든다.
+
+
+        // farmerProfile에 list로 저장한다.
+
+
+        return null;
+    }
+
+    public GetCropDto.Response getFarmerCrops(String userId) {
+
+        User user = getUserById(Long.parseLong(userId));
+        FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+
+        // Crop 데이터가 있는지 확인 후 없으면 생성, 있다면 조회 후 Dto mapping
+        return GetCropDto.Response.builder()
+                .crops(getFarmerCropsByFarmerProfile(farmerProfile)
+                        .stream()
+                        .map(crop -> modelMapper.map(crop, GetCropDto.Crop.class))
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    private List<Crop> getFarmerCropsByFarmerProfile(FarmerProfile farmerProfile) {
+        return farmerCropRepository.findByFarmerProfile(farmerProfile).orElseThrow(() -> new FarmartException(Status.BAD_REQUEST));
     }
 }

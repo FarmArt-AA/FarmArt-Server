@@ -16,4 +16,8 @@ public class CropImage extends AuditableEntity {
 
     @Column(name = "crop_image_path")
     private String cropImagePath;
+
+    public CropImage(Crop crop) {
+        this.crop = crop;
+    }
 }

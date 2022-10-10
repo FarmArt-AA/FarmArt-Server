@@ -19,4 +19,8 @@ public class DesignerWorkArea extends IdentifiableEntity {
     @Column(name = "designer_work_area_type")
     @Enumerated(EnumType.STRING)
     private DesignerWorkAreaType designerWorkAreaType;
+
+    public DesignerWorkArea(DesignerProfile designerProfile) {
+        this.designerProfile = designerProfile;
+    }
 }

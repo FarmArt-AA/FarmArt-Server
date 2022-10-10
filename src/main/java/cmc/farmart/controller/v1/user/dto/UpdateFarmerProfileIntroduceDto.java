@@ -10,16 +10,16 @@ public class UpdateFarmerProfileIntroduceDto {
     @Getter
     public static class Request {
 
-        @Schema(description = "농부 닉네임")
+        @Schema(description = "농부 닉네임", required = true)
         private String nickName;
 
-        @Schema(description = "농가명")
+        @Schema(description = "농가명", required = true)
         private String farmName;
 
-        @Schema(description = "농사 지역")
+        @Schema(description = "농사 지역", required = true)
         private String farmLocation;
 
-        @Schema(description = "농부 소개")
+        @Schema(description = "농부 소개", required = true)
         private String farmIntroduce;
     }
 

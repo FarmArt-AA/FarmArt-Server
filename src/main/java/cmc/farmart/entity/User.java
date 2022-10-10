@@ -38,7 +38,7 @@ public class User extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     private SocialType socialType; // 애플로그인, 카카오 로그인 구분
 
-    @Column(name = "profile_image_url")
+    @Column(name = "profile_image_")
     private String profileImageUrl; // 프로필 사진
 
     @Column(name = "refresh_token", nullable = false)

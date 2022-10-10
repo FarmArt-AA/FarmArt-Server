@@ -1,6 +1,7 @@
 package cmc.farmart.entity.designer;
 
 import cmc.farmart.entity.AuditableEntity;
+import cmc.farmart.entity.ProfileLink;
 import cmc.farmart.entity.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,22 +19,25 @@ public class DesignerProfile extends AuditableEntity {
     @JoinColumn(name = "a_user_id")
     private User user;
 
+    @Column(name = "designer_profile_image_path")
+    private String designerProfileImagePath; // 디자이너 프로필 이미지
+
     @Column(name = "designer_profile_title")
-    private String designerProfileTitle;
+    private String designerProfileTitle; // 프로필 제목
 
     @Column(name = "designer_profile_profile_introduce")
-    private String designerProfileProfileIntroduce;
+    private String designerProfileProfileIntroduce; // 소개
 
-    // 작업분야
     @OneToMany(mappedBy = "designerWorkAreaType")
-    private List<DesignerWorkArea> designerWorkAreaTypes;
+    private List<DesignerWorkArea> designerWorkAreaTypes; // 작업분야
 
-    @Column(name = "designer_profile_image_url")
-    private String designerProfileImageUrl;
-
-    // 디자이너 프로젝트
     @OneToMany(mappedBy = "designerProfile")
-    private List<DesignerProject> designerProjects;
+    private List<DesignerProject> designerProjects; // 디자이너 프로젝트
 
+    @OneToMany(mappedBy = "designerProfile")
+    private List<ProfileLink> profileLinks; // 링크
 
+    public DesignerProfile(User user) {
+        this.user = user;
+    }
 }
