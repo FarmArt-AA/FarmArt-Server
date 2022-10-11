@@ -1,15 +1,17 @@
 package cmc.farmart.controller.v1.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public class CreateCropDto {
 
     @Getter
+    @Setter
     public static class Request {
 
         @Schema(description = "작물 이름", required = true)
@@ -27,13 +29,6 @@ public class CreateCropDto {
     public static class CropImage {
 
         @Schema(description = "작물 사진")
-        private String cropImagePath;
-    }
-
-    @Data
-    @Builder
-    public static class Response {
-
-
+        private MultipartFile cropImagePath;
     }
 }

@@ -6,7 +6,9 @@ import cmc.farmart.controller.v1.user.dto.*;
 import cmc.farmart.entity.FileExtensionType;
 import cmc.farmart.entity.User;
 import cmc.farmart.entity.farmer.Crop;
+import cmc.farmart.entity.farmer.CropImage;
 import cmc.farmart.entity.farmer.FarmerProfile;
+import cmc.farmart.repository.user.CropImageRepository;
 import cmc.farmart.repository.user.FarmerCropRepository;
 import cmc.farmart.repository.user.FarmerProfileRepository;
 import cmc.farmart.repository.user.UserRepository;
@@ -19,8 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,7 @@ public class FarmerMyPageService {
     private final UserRepository userRepository;
     private final FarmerProfileRepository farmerProfileRepository;
     private final FarmerCropRepository farmerCropRepository;
+    private final CropImageRepository cropImageRepository;
 
     private final ModelMapper modelMapper;
 
@@ -84,9 +89,14 @@ public class FarmerMyPageService {
     public GetFarmerProfileIntroduceDto.Response getFarmerProfileIntroduce(String userId) { // 농부 프로필 닉네임 ~ 소개 조회 API
 
         User user = getUserById(Long.parseLong(userId));
-        FarmerProfile farmerProfile = getFarmerProfileByUser(user); // 농부 프로필 조회
-
-        return responseFarmerProfileIntroduceDto(user, farmerProfile);
+        Optional<FarmerProfile> farmerProfile = farmerProfileRepository.findByUser(user);
+        if (Boolean.FALSE.equals(farmerProfile.isPresent())) {
+            farmerProfileRepository.save(new FarmerProfile(user));
+            return GetFarmerProfileIntroduceDto.Response.builder()
+                    .nickName(user.getUserNickName())
+                    .build();
+        }
+        return responseFarmerProfileIntroduceDto(user, farmerProfile.get());
     }
 
     public UpdateFarmerProfileIntroduceDto.Response updateFarmerProfileIntroduce(String userId, UpdateFarmerProfileIntroduceDto.Request request) {
@@ -105,10 +115,6 @@ public class FarmerMyPageService {
                 .farmLocation(farmerProfile.getFarmLocation())
                 .farmIntroduce(farmerProfile.getFarmIntroduce())
                 .build();
-    }
-
-    private FarmerProfile getFarmerProfileByUser(User user) {
-        return farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.NOT_FOUND));
     }
 
     private User getUserById(final Long userId) {
@@ -149,20 +155,49 @@ public class FarmerMyPageService {
                 .build();
     }
 
-    public CreateCropDto.Response createFarmerCrop(String userId, CreateCropDto.Request request) {
+    public void createFarmerCrop(String userId, CreateCropDto.Request request) {
 
         User user = getUserById(Long.parseLong(userId));
         FarmerProfile farmerProfile = getFarmerProfileByUser(user);
 
-        // farmerProfile에 재배중인 작물 리스트에 추가.
+        // 재배중인 작물 추가
+        Crop crop = Crop.builder()
+                .farmerProfile(farmerProfile)
+                .cropName(request.getCropName())
+                .cropDescription(request.getCropDescription())
+                .build();
+        farmerCropRepository.save(crop);
 
-        // request로부터 값을 받아서 list로 만든다.
 
+        // 재배중인 작물 사진 (최대 3개) 추가
 
-        // farmerProfile에 list로 저장한다.
+        for (CreateCropDto.CropImage cropImage : request.getCropImages()) {
+            verifyExistsFile(cropImage.getCropImagePath()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
 
+            String extension = getExtension(Objects.requireNonNull(cropImage.getCropImagePath().getOriginalFilename())); // 확장자 추출
 
-        return null;
+            verifyImageExtension(extension); // 이미지류 확장자만 가능하도록 검증
+
+            String bucketKey = makeBucketKey(FARMAR_ORIGIN_S3_PREFIX_OBJECT_KEY, extension); // 새로운 버킷 키 생성
+
+            try {
+                // 이미지 등록
+                s3Service.put(bucketName, bucketKey, cropImage.getCropImagePath().getInputStream());
+
+                String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, bucketKey, presignedUrlExpireMillisecond);
+
+                CropImage newCropImage = CropImage.builder()
+                        .crop(crop)
+                        .cropImageUrl(bucketKey)
+                        .build();
+                cropImageRepository.save(newCropImage);
+
+            } catch (Exception ex) {
+                s3Service.delete(bucketName, bucketKey);
+                log.error(ex.getMessage());
+                throw new FarmartException(Status.INTERNAL_SERVER_ERROR);
+            }
+        }
     }
 
     public GetCropDto.Response getFarmerCrops(String userId) {
@@ -170,16 +205,41 @@ public class FarmerMyPageService {
         User user = getUserById(Long.parseLong(userId));
         FarmerProfile farmerProfile = getFarmerProfileByUser(user);
 
+        // List는 값이 없어도 빈 리스트로 반환한다.
+//        Optional<List<Crop>> farmerCrop = farmerCropRepository.findAllByFarmerProfile(farmerProfile);
+//        if(Boolean.FALSE.equals(farmerCrop.isPresent())) {
+//            return GetCropDto.Response.builder().build();
+//        }
+
         // Crop 데이터가 있는지 확인 후 없으면 생성, 있다면 조회 후 Dto mapping
+        // 지금 내가 하고 싶은 것: 사용자의 재배 중인 작물 리스트를 주고 싶다.
+        // 1. 사용자의 작물 리스트를 전부 가져온다. by DB
+        List<Crop> crops = farmerCropRepository.findAllByFarmerProfile(farmerProfile);
+
+        // 2. DB에 저장돤 작물 리스트를 GetCropDto.Crop 타입에 맞게 맵핑해준다.
+        List<GetCropDto.Crop> cropList = crops.stream()
+                .map(crop -> GetCropDto.Crop.builder()
+                        .cropName(crop.getCropName())
+                        .cropDescription(crop.getCropDescription())
+                        .cropImages(
+                                crop.getCropImages().stream()
+                                        .map(cropImage ->
+                                        {
+                                            try {
+                                                return GetCropDto.CropImage.builder()
+                                                        .cropImageUrl(s3Service.getPresignedUrl4Download(bucketName, cropImage.getCropImageUrl(), presignedUrlExpireMillisecond))
+                                                        .build();
+                                            } catch (URISyntaxException e) {
+                                                throw new FarmartException(Status.INTERNAL_SERVER_ERROR);
+                                            }
+                                        }).collect(Collectors.toList()))
+                        .build()).collect(Collectors.toList());
         return GetCropDto.Response.builder()
-                .crops(getFarmerCropsByFarmerProfile(farmerProfile)
-                        .stream()
-                        .map(crop -> modelMapper.map(crop, GetCropDto.Crop.class))
-                        .collect(Collectors.toList()))
+                .crop(cropList)
                 .build();
     }
 
-    private List<Crop> getFarmerCropsByFarmerProfile(FarmerProfile farmerProfile) {
-        return farmerCropRepository.findByFarmerProfile(farmerProfile).orElseThrow(() -> new FarmartException(Status.BAD_REQUEST));
+    private FarmerProfile getFarmerProfileByUser(User user) {
+        return farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.BAD_REQUEST));
     }
 }

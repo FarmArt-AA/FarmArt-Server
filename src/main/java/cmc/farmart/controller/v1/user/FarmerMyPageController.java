@@ -52,8 +52,9 @@ public class FarmerMyPageController {
 
     @Operation(summary = "농부 재배중인 작물 추가하기")
     @PostMapping("/{userId}/crop")
-    public ResponseEntity<CreateCropDto.Response> createFarmerCrop(@PathVariable String userId, CreateCropDto.Request request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(farmerMyPageService.createFarmerCrop(userId, request));
+    public ResponseEntity<Void> createFarmerCrop(@PathVariable String userId, CreateCropDto.Request request) {
+        farmerMyPageService.createFarmerCrop(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
 }

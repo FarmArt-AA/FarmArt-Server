@@ -17,10 +17,14 @@ public class GetCropDto {
     public static class Response {
 
         @Schema(description = "재배중인 작물")
-        private List<Crop> crops;
+        private List<Crop> crop;
+
     }
 
     @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Crop {
 
         @Schema(description = "작물 이름", required = true)
@@ -35,16 +39,12 @@ public class GetCropDto {
     }
 
     @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CropImage {
 
-        @Schema(description = "작물 첫번째 사진")
-        private String cropImage1;
-
-        @Schema(description = "작물 두번째 사진")
-        private String cropImage2;
-
-        @Schema(description = "작물 세번째 사진")
-        private String cropImage3;
+        private String cropImageUrl;
 
     }
 }
