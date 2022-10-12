@@ -2,10 +2,14 @@ package cmc.farmart.entity;
 
 import cmc.farmart.entity.designer.DesignerProfile;
 import cmc.farmart.entity.farmer.FarmerProfile;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "A_PROFILE_LINK")
 @Entity
@@ -19,8 +23,11 @@ public class ProfileLink extends AuditableEntity { // 디자이너, 농부 프�
     @JoinColumn(name = "designer_profile_id")
     private DesignerProfile designerProfile;
 
-    @Column(name = "linkPath")
-    private String linkPath;
+    @Column(name = "linkTitle")
+    private String linkTitle;
+
+    @Column(name = "webSiteUrl")
+    private String webSiteUrl;
 
     public ProfileLink(FarmerProfile farmerProfile) {
         this.farmerProfile = farmerProfile;

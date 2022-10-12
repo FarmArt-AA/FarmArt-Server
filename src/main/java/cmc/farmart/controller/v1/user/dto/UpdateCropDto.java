@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class UpdateCropDto {
@@ -12,10 +14,16 @@ public class UpdateCropDto {
     @Setter
     public static class Request {
 
+        @Schema(description = "재배 중인 작물 PK")
+        @NotNull(message = "재배 중인 작물 PK 필수")
+        private Long cropId;
+
         @Schema(description = "작물 이름", required = true)
+        @NotBlank(message = "수정할 작물 이름 필수")
         private String cropName;
 
         @Schema(description = "작물 설명", required = true)
+        @NotBlank(message = "수정할 작물 설명 필수")
         private String cropDescription;
 
         @Schema(description = "작물 사진 목록", required = false)

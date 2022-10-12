@@ -3,15 +3,16 @@ package cmc.farmart.sevice.user;
 import cmc.farmart.common.exception.FarmartException;
 import cmc.farmart.common.exception.Status;
 import cmc.farmart.controller.v1.user.dto.*;
+import cmc.farmart.domain.user.JobTitle;
 import cmc.farmart.entity.FileExtensionType;
+import cmc.farmart.entity.ProfileLink;
 import cmc.farmart.entity.User;
+import cmc.farmart.entity.designer.DesignerProfile;
 import cmc.farmart.entity.farmer.Crop;
 import cmc.farmart.entity.farmer.CropImage;
+import cmc.farmart.entity.farmer.FarmProfileImage;
 import cmc.farmart.entity.farmer.FarmerProfile;
-import cmc.farmart.repository.user.CropImageRepository;
-import cmc.farmart.repository.user.FarmerCropRepository;
-import cmc.farmart.repository.user.FarmerProfileRepository;
-import cmc.farmart.repository.user.UserRepository;
+import cmc.farmart.repository.user.*;
 import cmc.farmart.sevice.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,10 @@ public class FarmerMyPageService {
     private final FarmerProfileRepository farmerProfileRepository;
     private final FarmerCropRepository farmerCropRepository;
     private final CropImageRepository cropImageRepository;
+    private final FarmProfileImageRepository farmProfileImageRepository;
+    private final ProfileLinkRepository profileLinkRepository;
+
+    private final DesignerProfileRepository designerProfileRepository;
 
     private final ModelMapper modelMapper;
 
@@ -62,6 +67,9 @@ public class FarmerMyPageService {
 
         // TODO:: Need Code Refactoring
         FarmerProfile farmerProfile = farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.NOT_FOUND));
+        if(Objects.nonNull(farmerProfile.getFarmerProfileImagePath())) { // 서버로부터 이미지를 받은 이후부터는 s3 기존 이미지를 삭제하고 저장한다.
+            s3Service.delete(bucketName,farmerProfile.getFarmerProfileImagePath());
+        }
         farmerProfile.setFarmerProfileImagePath(bucketKey);
 
         try {
@@ -96,9 +104,9 @@ public class FarmerMyPageService {
         return responseFarmerProfileIntroduceDto(user, farmerProfile.get());
     }
 
-    public UpdateFarmerProfileIntroduceDto.Response updateFarmerProfileIntroduce(String userId, UpdateFarmerProfileIntroduceDto.Request request) {
+    public UpdateFarmerProfileIntroduceDto.Response updateFarmerProfileIntroduce(UpdateFarmerProfileIntroduceDto.Request request) {
 
-        User user = getUserById(Long.parseLong(userId));
+        User user = getUserById(request.getUserId());
         FarmerProfile farmerProfile = getFarmerProfileByUser(user);
 
         // farmerProfile 값을 update
@@ -131,16 +139,12 @@ public class FarmerMyPageService {
 
     private String getExtension(final String fileName) {
         int dotIndex = fileName.lastIndexOf(".");
-        if (dotIndex == -1) {
-            throw new FarmartException(Status.WITHOUT_FILE_EXTENSION);
-        }
+        checkMaxProfileLinkAddSizeExceeded(dotIndex == -1, Status.WITHOUT_FILE_EXTENSION);
         return fileName.substring(dotIndex + 1).toLowerCase();
     }
 
     private void verifyExistsFile(MultipartFile file) {
-        if (Objects.isNull(file) || file.isEmpty()) {
-            throw new FarmartException(Status.REQUIRE_FILE);
-        }
+        checkMaxProfileLinkAddSizeExceeded(Objects.isNull(file) || file.isEmpty(), Status.REQUIRE_FILE);
     }
 
     private GetFarmerProfileIntroduceDto.Response responseFarmerProfileIntroduceDto(User user, FarmerProfile farmerProfile) {
@@ -152,13 +156,14 @@ public class FarmerMyPageService {
                 .build();
     }
 
-    public CreateCropDto.Response createFarmerCrop(String userId, CreateCropDto.Request request) throws URISyntaxException {
+    public CreateCropDto.Response createFarmerCrop(CreateCropDto.Request request) throws URISyntaxException {
 
-        User user = getUserById(Long.parseLong(userId));
+        User user = getUserById(request.getUserId());
         FarmerProfile farmerProfile = getFarmerProfileByUser(user);
 
+        // 작물은 최대 5개까지 등록 가능.
         List<Crop> farmerCropList = farmerCropRepository.findAllByFarmerProfile(farmerProfile);
-        checkCropMaxAddSizeExceeded(farmerCropList.size() > 5, Status.MAX_ADD_SIZE_EXCEEDED);
+        checkCropMaxAddSizeExceeded(farmerCropList.size() >= 5, Status.MAX_ADD_SIZE_EXCEEDED);
 
         // 재배중인 작물 추가
         Crop crop = Crop.builder()
@@ -168,14 +173,13 @@ public class FarmerMyPageService {
                 .build();
         farmerCropRepository.save(crop);
 
-
         ArrayList<CreateCropDto.CropImageURL> cropImageURLS = new ArrayList<>(); // 재배 중인 작물 사진을 담을 리스트
         for (CreateCropDto.CropImageFile cropImage : request.getCropImages()) {
             checkCropImageMaxUploadSizeExceeded(cropImageURLS); // 재배 중인 작물 사진 (최대 3개) 추가
 
-            verifyExistsFile(cropImage.getCropImagePath()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
+            verifyExistsFile(cropImage.getCropImageFile()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
 
-            String extension = getExtension(Objects.requireNonNull(cropImage.getCropImagePath().getOriginalFilename())); // 확장자 추출
+            String extension = getExtension(Objects.requireNonNull(cropImage.getCropImageFile().getOriginalFilename())); // 확장자 추출
 
             verifyImageExtension(extension); // 이미지류 확장자만 가능하도록 검증
 
@@ -183,7 +187,7 @@ public class FarmerMyPageService {
 
             try {
                 // 이미지 등록
-                s3Service.put(bucketName, bucketKey, cropImage.getCropImagePath().getInputStream());
+                s3Service.put(bucketName, bucketKey, cropImage.getCropImageFile().getInputStream());
             } catch (Exception ex) {
                 s3Service.delete(bucketName, bucketKey);
                 log.error(ex.getMessage());
@@ -211,9 +215,7 @@ public class FarmerMyPageService {
     }
 
     private void checkCropMaxAddSizeExceeded(boolean farmerCropList, Status maxAddSizeExceeded) {
-        if (farmerCropList) {
-            throw new FarmartException(maxAddSizeExceeded);
-        }
+        checkMaxProfileLinkAddSizeExceeded(farmerCropList, maxAddSizeExceeded);
     }
 
     private void checkCropImageMaxUploadSizeExceeded(ArrayList<CreateCropDto.CropImageURL> cropImageURLS) {
@@ -256,12 +258,16 @@ public class FarmerMyPageService {
     }
 
     private FarmerProfile getFarmerProfileByUser(User user) {
-        return farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.BAD_REQUEST));
+        return farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_FARMER));
     }
 
-    public UpdateCropDto.Response updateFarmerCrop(Long userId, Long cropId, UpdateCropDto.Request request) throws URISyntaxException {
+    private DesignerProfile getDesignerProfileByUser(User user) {
+        return designerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_DESIGNER));
+    }
+
+    public UpdateCropDto.Response updateFarmerCrop(UpdateCropDto.Request request) throws URISyntaxException {
         // 해당 작물을 찾는다.
-        Crop crop = farmerCropRepository.findById(cropId).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_CROP));
+        Crop crop = farmerCropRepository.findById(request.getCropId()).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_CROP));
         crop.setCropName(request.getCropName());
         crop.setCropDescription(request.getCropDescription());
         farmerCropRepository.save(crop);
@@ -324,5 +330,188 @@ public class FarmerMyPageService {
                 .cropDescription(crop.getCropDescription())
                 .cropImages(cropImageURLS)
                 .build();
+    }
+
+    public GetFarmProfileImagesDto.Response getFarmProfileImages(Long userId) throws URISyntaxException {
+
+        User user = getUserById(userId);
+        FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+
+        ArrayList<GetFarmProfileImagesDto.FarmProfileImage> farmProfileImages = new ArrayList<>(); // 농가 이미지 다운로드 리스트를 반환할 자료구조
+        for (FarmProfileImage farmProfileImage : farmProfileImageRepository.findAllByFarmerProfile(farmerProfile)) {
+
+            String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, farmProfileImage.getFarmImagePath(), presignedUrlExpireMillisecond);
+
+            GetFarmProfileImagesDto.FarmProfileImage farmProfileImageDto = GetFarmProfileImagesDto.FarmProfileImage.builder()
+                    .cropImageId(farmProfileImage.getId())
+                    .cropImageUrl(downloadUrl)
+                    .build();
+            farmProfileImages.add(farmProfileImageDto);
+
+        }
+
+        return GetFarmProfileImagesDto.Response.builder()
+                .farmProfileImages(farmProfileImages)
+                .build();
+    }
+
+    public CreateFarmProfileImageDto.Response createFarmProfileImage(CreateFarmProfileImageDto.Request request) throws URISyntaxException {
+        User user = getUserById(request.getUserId());
+        FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+
+
+        List<FarmProfileImage> farmProfileImages = farmProfileImageRepository.findAll();
+
+        // 이미지가 이미 3개라면 더이상 추가하지 못한다.
+        if(farmProfileImages.size() >= 3) throw new FarmartException(Status.MAX_UPLOAD_SIZE_EXCEEDED);
+
+        verifyExistsFile(request.getFarmImageFile()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
+
+        String extension = getExtension(Objects.requireNonNull(request.getFarmImageFile().getOriginalFilename())); // 확장자 추출
+
+        verifyImageExtension(extension); // 이미지류 확장자만 가능하도록 검증
+
+        String bucketKey = makeBucketKey(FARMAR_ORIGIN_S3_PREFIX_OBJECT_KEY, extension); // 새로운 버킷 키 생성
+
+        try {
+            // 이미지 등록
+            s3Service.put(bucketName, bucketKey, request.getFarmImageFile().getInputStream());
+
+            // 농부의 농가 이미지 데이터 생성
+            FarmProfileImage farmProfileImage = FarmProfileImage.builder()
+                    .farmerProfile(farmerProfile)
+                    .farmImagePath(bucketKey)
+                    .build();
+            farmProfileImageRepository.save(farmProfileImage);
+
+        } catch (Exception ex) {
+            s3Service.delete(bucketName, bucketKey);
+            log.error(ex.getMessage());
+            throw new FarmartException(Status.INTERNAL_SERVER_ERROR);
+        }
+
+        String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, bucketKey, presignedUrlExpireMillisecond);
+
+        return CreateFarmProfileImageDto.Response.builder()
+                .farmProfileImageDownloadUrl(downloadUrl)
+                .build();
+    }
+
+    public void deleteFarmProfileImage(Long userId, Long farmProfileImageId) {
+        User user = getUserById(userId);
+        FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+
+        Optional<FarmProfileImage> farmerProfileImage = farmProfileImageRepository.findByFarmerProfileAndAndId(farmerProfile, farmProfileImageId);
+        checkMaxProfileLinkAddSizeExceeded(Boolean.FALSE.equals(farmerProfileImage.isPresent()), Status.NOT_EXISTS_FARMER_PROFILE);
+
+        s3Service.delete(bucketName, farmerProfileImage.get().getFarmImagePath());
+        farmProfileImageRepository.delete(farmerProfileImage.get());
+
+    }
+
+    public GetFarmerProfileLinkDto.Response getFarmerProfileLinks(Long userId) {
+        User user = getUserById(userId);
+        if(user.getJobTitle().equals(JobTitle.FARMER)) {
+            FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+            List<ProfileLink> farmerProfileLinks = profileLinkRepository.findAllByFarmerProfile(farmerProfile);
+
+            return GetFarmerProfileLinkDto.Response.builder()
+                    .farmerProfileLinkList(farmerProfileLinks.stream()
+                            .map(farmerProfileLink -> GetFarmerProfileLinkDto.FarmerProfileLinkList.builder()
+                                    .linkId(farmerProfileLink.getId())
+                                    .linkTitle(farmerProfileLink.getLinkTitle())
+                                    .webSiteUrl(farmerProfileLink.getWebSiteUrl())
+                                    .build()).collect(Collectors.toList()))
+                    .build();
+        } else if(user.getJobTitle().equals(JobTitle.DESIGNER)) {
+            // 디자이너의 프로필을 조회
+            DesignerProfile designerProfile = getDesignerProfileByUser(user);
+            List<ProfileLink> farmerProfileLinks = profileLinkRepository.findAllByDesignerProfile(designerProfile);
+
+            return GetFarmerProfileLinkDto.Response.builder()
+                    .farmerProfileLinkList(farmerProfileLinks.stream()
+                            .map(designerProfileLink -> GetFarmerProfileLinkDto.FarmerProfileLinkList.builder()
+                                    .linkId(designerProfileLink.getId())
+                                    .linkTitle(designerProfileLink.getLinkTitle())
+                                    .webSiteUrl(designerProfileLink.getWebSiteUrl())
+                                    .build()).collect(Collectors.toList()))
+                    .build();
+        } else {
+            throw new FarmartException(Status.NOT_EXISTS_JOB_TITLE);
+        }
+    }
+
+    public CreateFarmerProfileLinkDto.Response createFarmerProfileLink(CreateFarmerProfileLinkDto.Request request) {
+        checkMaxProfileLinkAddSizeExceeded(profileLinkRepository.findAll().size() >= 2, Status.MAX_PROFILE_LINK_ADD_SIZE_EXCEEDED);
+        User user = getUserById(request.getUserId());
+
+        if(user.getJobTitle().equals(JobTitle.FARMER)) {
+            FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+            ProfileLink farmerProfileLink = ProfileLink.builder()
+                    .farmerProfile(farmerProfile)
+                    .linkTitle(request.getLinkTitle())
+                    .webSiteUrl(request.getWebSiteUrl())
+                    .build();
+            profileLinkRepository.save(farmerProfileLink);
+
+            return CreateFarmerProfileLinkDto.Response.builder()
+                .linkTitle(farmerProfileLink.getLinkTitle())
+                .webSiteUrl(farmerProfileLink.getWebSiteUrl())
+                    .build();
+        } else if(user.getJobTitle().equals(JobTitle.DESIGNER)) {
+            DesignerProfile designerProfile = getDesignerProfileByUser(user);
+            ProfileLink designerProfileLink = ProfileLink.builder()
+                    .designerProfile(designerProfile)
+                    .linkTitle(request.getLinkTitle())
+                    .webSiteUrl(request.getWebSiteUrl())
+                    .build();
+            profileLinkRepository.save(designerProfileLink);
+
+            return CreateFarmerProfileLinkDto.Response.builder()
+                    .linkTitle(designerProfileLink.getLinkTitle())
+                    .webSiteUrl(designerProfileLink.getWebSiteUrl())
+                    .build();
+        } else {
+            throw new FarmartException(Status.NOT_EXISTS_JOB_TITLE);
+        }
+
+    }
+
+    private void checkMaxProfileLinkAddSizeExceeded(boolean profileLinkRepository, Status maxProfileLinkAddSizeExceeded) {
+        if(profileLinkRepository) {
+            throw new FarmartException(maxProfileLinkAddSizeExceeded);
+        }
+    }
+
+    public UpdateFarmerProfileLinkDto.Response updateFarmerProfileLink(UpdateFarmerProfileLinkDto.Request request) {
+        User user = getUserById(request.getUserId());
+        if(user.getJobTitle().equals(JobTitle.FARMER)) {
+            FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+            ProfileLink farmerProfileLink = profileLinkRepository.findByFarmerProfileAndId(farmerProfile, request.getLinkId()).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_FARMER_PROFILE_LINK));
+            farmerProfileLink.setLinkTitle(request.getLinkTitle());
+            farmerProfileLink.setWebSiteUrl(request.getWebSiteUrl());
+            profileLinkRepository.save(farmerProfileLink);
+
+            return UpdateFarmerProfileLinkDto.Response.builder()
+                    .linkId(farmerProfileLink.getId())
+                    .linkTitle(farmerProfileLink.getLinkTitle())
+                    .webSiteUrl(farmerProfileLink.getWebSiteUrl())
+                    .build();
+
+        } else if(user.getJobTitle().equals(JobTitle.DESIGNER)) {
+            DesignerProfile designerProfile = getDesignerProfileByUser(user);
+            ProfileLink designerProfileLink = profileLinkRepository.findByDesignerProfileAndId(designerProfile, request.getLinkId()).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_FARMER_PROFILE_LINK));
+            designerProfileLink.setLinkTitle(request.getLinkTitle());
+            designerProfileLink.setWebSiteUrl(request.getWebSiteUrl());
+            profileLinkRepository.save(designerProfileLink);
+            return UpdateFarmerProfileLinkDto.Response.builder()
+                    .linkId(designerProfileLink.getId())
+                    .linkTitle(designerProfileLink.getLinkTitle())
+                    .webSiteUrl(designerProfileLink.getWebSiteUrl())
+                    .build();
+        } else {
+            throw new FarmartException(Status.NOT_EXISTS_JOB_TITLE);
+        }
+
     }
 }

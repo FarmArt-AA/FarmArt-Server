@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class CreateCropDto {
@@ -11,6 +12,10 @@ public class CreateCropDto {
     @Getter
     @Setter
     public static class Request {
+
+        @NotNull(message = "사용자 PK 필수")
+        @Schema(description = "사용자 PK")
+        private Long userId;
 
         @Schema(description = "작물 이름", required = true)
         private String cropName;
@@ -27,7 +32,7 @@ public class CreateCropDto {
     public static class CropImageFile {
 
         @Schema(description = "작물 사진")
-        private MultipartFile cropImagePath;
+        private MultipartFile cropImageFile;
     }
 
     @Data

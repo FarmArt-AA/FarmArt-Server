@@ -35,7 +35,14 @@ public enum Status {
     REFRESH_TOKEN_REISSUE_AFTER_3_DAYS(400, "HO4HM", "리프레시 토큰 발급 3일 경과 후, 재발급 가능"),
     MAX_UPLOAD_SIZE_EXCEEDED(400, "K9KN1", "최대 업로드 사이즈 초과"),
     MAX_ADD_SIZE_EXCEEDED(400, "JH3S6", "최대 등록 가능한 작물 개수 초과"),
-    NOT_EXISTS_CROP(400, "CR7E9", "존재하지 않는 작물입니다.");
+    MAX_PROFILE_LINK_ADD_SIZE_EXCEEDED(400, "P9M4Y", "최대 등록 가능한 작물 개수 초과"),
+    NOT_EXISTS_CROP(400, "CR7E9", "존재하지 않는 작물입니다."),
+    NOT_EXISTS_FARMER_PROFILE(400, "C0FM9", "존재하지 않는 농부 프로필입니다."),
+    NOT_EXISTS_FARMER_PROFILE_LINK(400, "F7UL0", "존재하지 않는 농부 링크입니다."),
+    NOT_EXISTS_FARMER(400, "F7M1R", "존재하지 않는 농부 정보입니다."),
+    NOT_EXISTS_DESIGNER(400, "D2E5R", "존재하지 않는 디자이너 정봉보입니다."),
+    NOT_EXISTS_JOB_TITLE(400, "J8M7B", "존재하지 않는 직업 유형입니다.");
+
 
     private int httpStatusCode;
     private String code;
