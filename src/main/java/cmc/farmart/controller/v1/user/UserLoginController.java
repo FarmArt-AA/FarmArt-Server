@@ -1,17 +1,18 @@
 package cmc.farmart.controller.v1.user;
 
-import cmc.farmart.controller.v1.user.dto.UserResponseDto;
+import cmc.farmart.controller.v1.user.dto.KakaoLoginDto;
+import cmc.farmart.controller.v1.user.dto.KakaoLoginSignUpDto;
 import cmc.farmart.sevice.user.UserLoginService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 @RequestMapping("/v1/user-login")
 @RequiredArgsConstructor
@@ -22,7 +23,11 @@ public class UserLoginController {
 
     @Operation(summary = "카카오 로그인")
     @PostMapping("/kakao")
-    public ResponseEntity<UserResponseDto> kakaoLogin(@RequestHeader("oauthToken") String accessToken, HttpServletResponse res) {
-        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.createToken(accessToken, res));
+    public ResponseEntity<KakaoLoginDto> kakaoLogin(
+            @Parameter(description = "kakaoAccessToken") @RequestHeader("oauthToken") String accessToken,
+            @Valid @RequestBody KakaoLoginSignUpDto.Request request,
+            HttpServletResponse hsrep,
+            HttpServletRequest hsreq) {
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginService.signUp(accessToken, request, hsrep, hsreq));
     }
 }

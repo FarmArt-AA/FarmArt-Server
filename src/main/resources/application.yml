@@ -10,11 +10,39 @@ spring:
   jpa:
     generate-ddl: true
     hibernate: # create: drop-create
-      ddl-auto: update
+      ddl-auto: create
       show-sql: true
   #      naming:
   #        naming_strategy: org.hibernate.cfg.ImprovedNamingStrategy
   #        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET_NAME}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ap-northeast-2
+      auto:
+    stack:
+      auto: false
+
+
+aws:
+  s3:
+    presigned-url-expire-millisecond: 3600000
+    region: ap-northeast-2
+
+farmart:
+  project:
+    document:
+      bucket: ${AWS_S3_BUCKET_NAME}
+
+jwt:
+  secret: ${JWT_SECRET_KEY}
+
 springdoc:
   use-fqn: true
   api-docs:
@@ -30,6 +58,3 @@ springdoc:
   paths-to-match:
     - /v1/**
     #- /test/**
-
-jwt:
-  secret: thisissecretkey01294809180@@12120980@@12120980

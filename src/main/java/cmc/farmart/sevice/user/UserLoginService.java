@@ -1,7 +1,12 @@
 package cmc.farmart.sevice.user;
 
-import cmc.farmart.controller.v1.user.dto.UserInfoDto;
-import cmc.farmart.controller.v1.user.dto.UserResponseDto;
+import cmc.farmart.common.exception.FarmartException;
+import cmc.farmart.common.exception.Status;
+import cmc.farmart.controller.v1.user.dto.KakaoLoginDto;
+import cmc.farmart.controller.v1.user.dto.KakaoLoginSignUpDto;
+import cmc.farmart.controller.v1.user.dto.KakaoUserInfoVo;
+import cmc.farmart.domain.user.ConfirmationType;
+import cmc.farmart.domain.user.JobTitle;
 import cmc.farmart.domain.user.SocialType;
 import cmc.farmart.entity.User;
 import cmc.farmart.jwt.JwtUtil;
@@ -14,13 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -30,35 +38,56 @@ public class UserLoginService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    public UserResponseDto createToken(String accessToken, HttpServletResponse res) {
+    public KakaoLoginDto signUp(final String accessToken, final KakaoLoginSignUpDto.Request request, final HttpServletResponse hsresp, final HttpServletRequest hsreq) {
 
-        //AccessToken으로 UserInfo 받기
-        UserInfoDto userInfo = getUserInfo(accessToken);
+        // 필수 약관 동의 validation
+        verifyConfirmation(request.getConfirmationTypes());
 
-        Assert.notNull(userInfo.getSocialId(), "유저 정보가 존재합니다.");
+        //AccessToken으로 KakaoUserInfo 받기
+        KakaoUserInfoVo kakaoUserInfoVo = getKakaoUserInfo(accessToken);
 
-        TokenDto tokens = jwtUtil.createToken(userInfo);
-        userInfo.setRefreshToken(tokens.getJwtRefreshToken());
+        // 사용자 존재 여부 체크
+        Assert.notNull(kakaoUserInfoVo.getSocialId(), "유저 정보가 존재하지 않습니다..");
+
+        // Auth로 받아온 사용자 정보를 jwt에 담는다.
+        TokenDto tokens = jwtUtil.createToken(kakaoUserInfoVo);
+        kakaoUserInfoVo.setRefreshToken(tokens.getJwtRefreshToken());
+
+        // 사용자 이름, 닉네임 저장
+        kakaoUserInfoVo.setUserName(request.getUserName());
+        kakaoUserInfoVo.setUserNickName(request.getUserNickName());
+        kakaoUserInfoVo.setJobtitle(JobTitle.valueOf(request.getJobTitle()));
+        kakaoUserInfoVo.setPhoneNumber(request.getPhoneNumber());
 
         //socialId 기준으로 DB select하여 User 데이터가 없으면 Insert, 있으면 Update
-        userService.insertOrUpdateUser(userInfo);
+        userService.insertOrUpdateUser(request.getConfirmationTypes(), hsreq.getRemoteAddr(), kakaoUserInfoVo);
 
-        Optional<User> userBySocialData = userService.findUserBySocialData(userInfo.getSocialId(), userInfo.getSocialType());
+        Optional<User> userByKakaoSocialData = userService.findUserBySocialData(kakaoUserInfoVo.getSocialId(), kakaoUserInfoVo.getSocialType());
 
-        //UserResponseDto에 userId 추가
-        UserResponseDto userResponseDto = new UserResponseDto(userBySocialData.get().getUserId(), userInfo.getUsername(), userInfo.getEmail(), userInfo.getImgURL());
+        // UserResponseDto에 userId 추가
+        KakaoLoginDto kakaoLoginDto = new KakaoLoginDto(userByKakaoSocialData.get().getId(), kakaoUserInfoVo.getEmail(), kakaoUserInfoVo.getProfileImageUrl());
 
-        res.addHeader("at-jwt-access-token", tokens.getJwtAccessToken());
-        res.addHeader("at-jwt-refresh-token", tokens.getJwtRefreshToken());
+        hsresp.addHeader("at-jwt-access-token", tokens.getJwtAccessToken());
+        hsresp.addHeader("at-jwt-refresh-token", tokens.getJwtRefreshToken());
 
-        return userResponseDto;
+        return kakaoLoginDto;
 
     }
 
-    private UserInfoDto getUserInfo(String accessToken) {
+    // 필수 동의 약관만 check
+    private void verifyConfirmation(final Set<ConfirmationType> userConfirmationTypes) {
+        if (Boolean.FALSE.equals(Arrays.stream(ConfirmationType.values())
+                .filter(confirmation -> confirmation.required().equals(Boolean.TRUE))
+                .allMatch(type -> userConfirmationTypes.stream().anyMatch(userConfirmationType -> userConfirmationType.equals(type))))) {
+            throw new FarmartException(Status.CONFIRMATION_REQUIRED_TERMS);
+        }
+
+    }
+
+    private KakaoUserInfoVo getKakaoUserInfo(String accessToken) {
 
         //UserRequestDto에 정보 받기
-        UserInfoDto userInfo = new UserInfoDto();
+        KakaoUserInfoVo kakaoUserInfoVo = new KakaoUserInfoVo();
 
         try {
             URL url = new URL("https://kapi.kakao.com/v2/user/me");
@@ -88,17 +117,14 @@ public class UserLoginService {
             JsonObject properties = element.getAsJsonObject().get("properties").getAsJsonObject();
             JsonObject kakao_account = element.getAsJsonObject().get("kakao_account").getAsJsonObject();
 
-            String nickname = properties.getAsJsonObject().get("nickname").getAsString();
-            String imgURL = properties.getAsJsonObject().get("profile_image").getAsString();
+            String profileImageUrl = properties.getAsJsonObject().get("profile_image").getAsString();
             String email = kakao_account.getAsJsonObject().get("email").getAsString();
 
             //    UserRequestDto에 값 주입
-            System.out.println("nickname = " + nickname);
-            userInfo.setUsername(nickname);
-            userInfo.setSocialId(kakaoId);
-            userInfo.setEmail(email);
-            userInfo.setImgURL(imgURL);
-            userInfo.setSocialType(SocialType.KAKAO);
+            kakaoUserInfoVo.setSocialId(kakaoId);
+            kakaoUserInfoVo.setEmail(email);
+            kakaoUserInfoVo.setProfileImageUrl(profileImageUrl);
+            kakaoUserInfoVo.setSocialType(SocialType.KAKAO);
 
 
         } catch (IOException e) {   // 잘못된 값 주입하고 에러 터지는 지 Test
@@ -107,6 +133,6 @@ public class UserLoginService {
             return null;    //글로벌 에러 처리할 때 변경
         }
 
-        return userInfo;
+        return kakaoUserInfoVo;
     }
 }

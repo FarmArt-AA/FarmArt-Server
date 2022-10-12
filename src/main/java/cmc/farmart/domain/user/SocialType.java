@@ -3,6 +3,8 @@ package cmc.farmart.domain.user;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+
 @Getter
 @RequiredArgsConstructor
 public enum SocialType {
@@ -12,4 +14,11 @@ public enum SocialType {
 
     private final Integer socialTypeCode;
     private final String socialTypeName;
+
+    public static SocialType ofSocialTypeCode(int socialTypeCode) {
+        return Arrays.stream(values())
+                .filter(socialType -> socialType.getSocialTypeCode() == socialTypeCode)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 SocialType 입니다."));
+    }
 }

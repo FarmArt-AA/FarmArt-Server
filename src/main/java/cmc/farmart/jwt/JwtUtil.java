@@ -1,6 +1,6 @@
 package cmc.farmart.jwt;
 
-import cmc.farmart.controller.v1.user.dto.UserInfoDto;
+import cmc.farmart.controller.v1.user.dto.KakaoUserInfoVo;
 import cmc.farmart.jwt.dto.TokenDto;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -34,16 +34,16 @@ public class JwtUtil {
     }
 
 
-    public TokenDto createToken(UserInfoDto userInfoDto) {
+    public TokenDto createToken(KakaoUserInfoVo kakaoUserInfoVo) {
         // createJws: JWT를 Signature로 token을 만듦.
 
-        String accessToken = createJws(ACCESS_TOKEN_EXP_MIN, userInfoDto);
+        String accessToken = createJws(ACCESS_TOKEN_EXP_MIN, kakaoUserInfoVo);
         String refreshToken = createJws(REFRESH_TOKEN_EXP_MIN, null);
 
         return new TokenDto(accessToken, refreshToken); // 생성자로 객체를 만들기 때문에 @Setter 제거했습니다.
     }
 
-    private String createJws(Integer expMin, UserInfoDto userInfoDto) {
+    private String createJws(Integer expMin, KakaoUserInfoVo kakaoUserInfoVo) {
 
         Date NOW = new Date(); // 메서드를 호출할 때의 시간을 생성해야 정확한 시간이다. -> private static final NOW = new Date()의 경우 클래스를 로더할 때의 시간이므로 적절하지 않다.
 
@@ -53,26 +53,22 @@ public class JwtUtil {
         header.put("alg", "HS256");
         //Body(Claims)
         Map<String, Object> claims = new HashMap<>();
-        claims.put("iss", "worryrecord");
+        claims.put("iss", "farmArt");
         claims.put("issueAt", NOW);
         claims.put("exp", new Date(System.currentTimeMillis() + 1000 * 60 * expMin));
 
         // TODO:: null 처리 코드 확인
-        if(Objects.nonNull(userInfoDto))  {
-            claims.put("socialId", userInfoDto.getSocialId());
-            claims.put("socialType", userInfoDto.getSocialType().toString());
-            claims.put("username", userInfoDto.getUsername());
-            claims.put("email", userInfoDto.getEmail());
+        if(Objects.nonNull(kakaoUserInfoVo))  {
+            claims.put("socialId", kakaoUserInfoVo.getSocialId());
+            claims.put("socialType", kakaoUserInfoVo.getSocialType().toString());
+            claims.put("email", kakaoUserInfoVo.getEmail());
         }
 
         //Signiture
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setHeader(header)
                 .setClaims(claims)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-
-        return token;
-
     }
 }
