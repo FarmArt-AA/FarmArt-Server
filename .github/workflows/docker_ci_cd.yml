@@ -35,7 +35,7 @@ env:
   ECR_REPOSITORY: farmart           # set this to your Amazon ECR repository name
 
   ECS_SERVICE: farmart-mypage-real-service                 # set this to your Amazon ECS service name
-  ECS_CLUSTER: farmart                 # set this to your Amazon ECS cluster name
+  ECS_CLUSTER: farmart-mypage-real-cluster                 # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: task-definition.json # set this to the path to your Amazon ECS task definition
   CONTAINER_NAME: farmart           # set this to the name of the container in the
 
