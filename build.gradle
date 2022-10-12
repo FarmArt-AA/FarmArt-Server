@@ -26,8 +26,8 @@ dependencies {
     //TODO:: JPA + DB
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-//    runtimeOnly 'mysql:mysql-connector-java'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.0.6'
+    runtimeOnly 'mysql:mysql-connector-java'
+//    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.0.6'
 
     //TODO:: lombok
     compileOnly 'org.projectlombok:lombok'
