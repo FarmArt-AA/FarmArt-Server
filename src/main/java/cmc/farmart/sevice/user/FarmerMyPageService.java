@@ -22,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -155,10 +152,13 @@ public class FarmerMyPageService {
                 .build();
     }
 
-    public void createFarmerCrop(String userId, CreateCropDto.Request request) {
+    public CreateCropDto.Response createFarmerCrop(String userId, CreateCropDto.Request request) throws URISyntaxException {
 
         User user = getUserById(Long.parseLong(userId));
         FarmerProfile farmerProfile = getFarmerProfileByUser(user);
+
+        List<Crop> farmerCropList = farmerCropRepository.findAllByFarmerProfile(farmerProfile);
+        checkCropMaxAddSizeExceeded(farmerCropList.size() > 5, Status.MAX_ADD_SIZE_EXCEEDED);
 
         // 재배중인 작물 추가
         Crop crop = Crop.builder()
@@ -169,9 +169,10 @@ public class FarmerMyPageService {
         farmerCropRepository.save(crop);
 
 
-        // 재배중인 작물 사진 (최대 3개) 추가
+        ArrayList<CreateCropDto.CropImageURL> cropImageURLS = new ArrayList<>(); // 재배 중인 작물 사진을 담을 리스트
+        for (CreateCropDto.CropImageFile cropImage : request.getCropImages()) {
+            checkCropImageMaxUploadSizeExceeded(cropImageURLS); // 재배 중인 작물 사진 (최대 3개) 추가
 
-        for (CreateCropDto.CropImage cropImage : request.getCropImages()) {
             verifyExistsFile(cropImage.getCropImagePath()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
 
             String extension = getExtension(Objects.requireNonNull(cropImage.getCropImagePath().getOriginalFilename())); // 확장자 추출
@@ -183,33 +184,46 @@ public class FarmerMyPageService {
             try {
                 // 이미지 등록
                 s3Service.put(bucketName, bucketKey, cropImage.getCropImagePath().getInputStream());
-
-                String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, bucketKey, presignedUrlExpireMillisecond);
-
-                CropImage newCropImage = CropImage.builder()
-                        .crop(crop)
-                        .cropImageUrl(bucketKey)
-                        .build();
-                cropImageRepository.save(newCropImage);
-
             } catch (Exception ex) {
                 s3Service.delete(bucketName, bucketKey);
                 log.error(ex.getMessage());
                 throw new FarmartException(Status.INTERNAL_SERVER_ERROR);
             }
+            CropImage newCropImage = CropImage.builder()
+                    .crop(crop)
+                    .cropImageUrl(bucketKey)
+                    .build();
+            cropImageRepository.save(newCropImage);
+
+            String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, bucketKey, presignedUrlExpireMillisecond);
+            CreateCropDto.CropImageURL cropImageUrl = CreateCropDto.CropImageURL.builder()
+                    .cropImageId(newCropImage.getId())
+                    .cropImageUrl(downloadUrl)
+                    .build();
+            cropImageURLS.add(cropImageUrl);
         }
+        return CreateCropDto.Response.builder()
+                .cropId(crop.getId())
+                .cropName(crop.getCropName())
+                .cropDescription(crop.getCropDescription())
+                .cropImages(cropImageURLS)
+                .build();
+    }
+
+    private void checkCropMaxAddSizeExceeded(boolean farmerCropList, Status maxAddSizeExceeded) {
+        if (farmerCropList) {
+            throw new FarmartException(maxAddSizeExceeded);
+        }
+    }
+
+    private void checkCropImageMaxUploadSizeExceeded(ArrayList<CreateCropDto.CropImageURL> cropImageURLS) {
+        checkCropMaxAddSizeExceeded(cropImageURLS.size() == 3, Status.MAX_UPLOAD_SIZE_EXCEEDED);
     }
 
     public GetCropDto.Response getFarmerCrops(String userId) {
 
         User user = getUserById(Long.parseLong(userId));
         FarmerProfile farmerProfile = getFarmerProfileByUser(user);
-
-        // List는 값이 없어도 빈 리스트로 반환한다.
-//        Optional<List<Crop>> farmerCrop = farmerCropRepository.findAllByFarmerProfile(farmerProfile);
-//        if(Boolean.FALSE.equals(farmerCrop.isPresent())) {
-//            return GetCropDto.Response.builder().build();
-//        }
 
         // Crop 데이터가 있는지 확인 후 없으면 생성, 있다면 조회 후 Dto mapping
         // 지금 내가 하고 싶은 것: 사용자의 재배 중인 작물 리스트를 주고 싶다.
@@ -219,6 +233,7 @@ public class FarmerMyPageService {
         // 2. DB에 저장돤 작물 리스트를 GetCropDto.Crop 타입에 맞게 맵핑해준다.
         List<GetCropDto.Crop> cropList = crops.stream()
                 .map(crop -> GetCropDto.Crop.builder()
+                        .cropId(crop.getId())
                         .cropName(crop.getCropName())
                         .cropDescription(crop.getCropDescription())
                         .cropImages(
@@ -227,6 +242,7 @@ public class FarmerMyPageService {
                                         {
                                             try {
                                                 return GetCropDto.CropImage.builder()
+                                                        .cropImageId(cropImage.getId())
                                                         .cropImageUrl(s3Service.getPresignedUrl4Download(bucketName, cropImage.getCropImageUrl(), presignedUrlExpireMillisecond))
                                                         .build();
                                             } catch (URISyntaxException e) {
@@ -241,5 +257,72 @@ public class FarmerMyPageService {
 
     private FarmerProfile getFarmerProfileByUser(User user) {
         return farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.BAD_REQUEST));
+    }
+
+    public UpdateCropDto.Response updateFarmerCrop(Long userId, Long cropId, UpdateCropDto.Request request) throws URISyntaxException {
+        // 해당 작물을 찾는다.
+        Crop crop = farmerCropRepository.findById(cropId).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_CROP));
+        crop.setCropName(request.getCropName());
+        crop.setCropDescription(request.getCropDescription());
+        farmerCropRepository.save(crop);
+
+
+        List<CropImage> cropImages = cropImageRepository.findAllByCrop(crop);
+        for (CropImage cropImage : cropImages) {
+            try {
+                // 기존 DB 에서 buckey키를 가져와서 이미지를 s3에서 삭제한다.
+                s3Service.delete(bucketName, cropImage.getCropImageUrl());
+            } catch (Exception ex) {
+                log.error(ex.getMessage());
+            }
+            // 기존 DB 항목들을 전체 삭제한다.
+            cropImageRepository.deleteCropImageByCrop(crop);
+        }
+
+        // rquest를 통해 받은 MultipartFile을 다시 전체 업로드한다.
+        ArrayList<CreateCropDto.CropImageURL> cropImageURLS = new ArrayList<>(); // 재배 중인 작물 사진을 담을 리스트
+        for (UpdateCropDto.CropImageFile cropImage : request.getCropImages()) {
+            checkCropImageMaxUploadSizeExceeded(cropImageURLS); // 재배 중인 작물 사진 (최대 3개) 추가
+
+            verifyExistsFile(cropImage.getCropImageFile()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
+
+            String extension = getExtension(Objects.requireNonNull(cropImage.getCropImageFile().getOriginalFilename())); // 확장자 추출
+
+            verifyImageExtension(extension); // 이미지류 확장자만 가능하도록 검증
+
+            String bucketKey = makeBucketKey(FARMAR_ORIGIN_S3_PREFIX_OBJECT_KEY, extension); // 새로운 버킷 키 생성
+
+            try {
+                // 이미지 등록
+                s3Service.put(bucketName, bucketKey, cropImage.getCropImageFile().getInputStream());
+            } catch (Exception ex) {
+                s3Service.delete(bucketName, bucketKey);
+                log.error(ex.getMessage());
+                throw new FarmartException(Status.INTERNAL_SERVER_ERROR);
+            }
+
+            // DB에 buckeyKey를 저장한다. (작물 추가 로직과 동일)
+            CropImage newCropImage = CropImage.builder()
+                    .crop(crop)
+                    .cropImageUrl(bucketKey)
+                    .build();
+            cropImageRepository.save(newCropImage);
+
+            String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, bucketKey, presignedUrlExpireMillisecond);
+            CreateCropDto.CropImageURL cropImageUrl = CreateCropDto.CropImageURL.builder()
+                    .cropImageId(newCropImage.getId())
+                    .cropImageUrl(downloadUrl)
+                    .build();
+            cropImageURLS.add(cropImageUrl);
+        }
+
+        farmerCropRepository.save(crop);
+
+        return UpdateCropDto.Response.builder()
+                .cropId(crop.getId())
+                .cropName(crop.getCropName())
+                .cropDescription(crop.getCropDescription())
+                .cropImages(cropImageURLS)
+                .build();
     }
 }

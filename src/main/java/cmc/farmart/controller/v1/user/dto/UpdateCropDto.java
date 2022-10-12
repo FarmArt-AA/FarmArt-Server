@@ -6,7 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-public class CreateCropDto {
+public class UpdateCropDto {
 
     @Getter
     @Setter
@@ -26,8 +26,8 @@ public class CreateCropDto {
     @Data
     public static class CropImageFile {
 
-        @Schema(description = "작물 사진")
-        private MultipartFile cropImagePath;
+        @Schema(description = "작물 사진 URL")
+        private MultipartFile cropImageFile;
     }
 
     @Data
@@ -46,7 +46,7 @@ public class CreateCropDto {
         private String cropDescription;
 
         @Schema(description = "작물 사진 목록", required = false)
-        private List<CropImageURL> cropImages;
+        private List<CreateCropDto.CropImageURL> cropImages;
 
     }
 
@@ -63,4 +63,6 @@ public class CreateCropDto {
         private String cropImageUrl;
 
     }
+
+
 }

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.net.URISyntaxException;
 
 @RequestMapping("/v1/my-page/farmer")
 @RequiredArgsConstructor
@@ -44,17 +45,31 @@ public class FarmerMyPageController {
         return ResponseEntity.status(HttpStatus.OK).body(farmerMyPageService.updateFarmerProfileIntroduce(userId, request));
     }
 
-    @Operation(summary = "농부 재배중인 작물 조회")
+    @Operation(summary = "농부 재배 중인 작물 조회")
     @GetMapping("/{userId}/crop")
     public ResponseEntity<GetCropDto.Response> getFarmerCrops(@PathVariable String userId) {
         return ResponseEntity.status(HttpStatus.OK).body(farmerMyPageService.getFarmerCrops(userId));
     }
 
+    @Operation(summary = "농부 재배 중인 작물 수정")
+    @PutMapping("/{userId}/crop/{cropId}")
+    public ResponseEntity<UpdateCropDto.Response> updateFarmerCrop(
+            @PathVariable Long userId,
+            @PathVariable Long cropId,
+            UpdateCropDto.Request request
+    ) throws URISyntaxException {
+        return ResponseEntity.status(HttpStatus.OK).body(farmerMyPageService.updateFarmerCrop(userId, cropId, request));
+    }
+
     @Operation(summary = "농부 재배중인 작물 추가하기")
     @PostMapping("/{userId}/crop")
-    public ResponseEntity<Void> createFarmerCrop(@PathVariable String userId, CreateCropDto.Request request) {
-        farmerMyPageService.createFarmerCrop(userId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<CreateCropDto.Response> createFarmerCrop(
+            @PathVariable String userId,
+            @Parameter(
+                    description = "농부 재배 중인 작물 이미지 리스트",
+                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
+            ) @Valid CreateCropDto.Request request) throws URISyntaxException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(farmerMyPageService.createFarmerCrop(userId, request));
     }
 
 }

@@ -33,7 +33,9 @@ public enum Status {
     CHECK_TEXT_LENGTH(400, "QC3P7", "텍스트 입력 조건 확인"),
     EXIST_TEXT(400, "N7L8U", "텍스트 존재"),
     REFRESH_TOKEN_REISSUE_AFTER_3_DAYS(400, "HO4HM", "리프레시 토큰 발급 3일 경과 후, 재발급 가능"),
-    MAX_UPLOAD_SIZE_EXCEEDED(400, "K9KN1", "최대 업로드 사이즈 초과");
+    MAX_UPLOAD_SIZE_EXCEEDED(400, "K9KN1", "최대 업로드 사이즈 초과"),
+    MAX_ADD_SIZE_EXCEEDED(400, "JH3S6", "최대 등록 가능한 작물 개수 초과"),
+    NOT_EXISTS_CROP(400, "CR7E9", "존재하지 않는 작물입니다.");
 
     private int httpStatusCode;
     private String code;

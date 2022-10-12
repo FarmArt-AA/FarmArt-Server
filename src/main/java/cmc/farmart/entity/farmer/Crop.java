@@ -1,15 +1,13 @@
 package cmc.farmart.entity.farmer;
 
 import cmc.farmart.entity.AuditableEntity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -30,7 +28,8 @@ public class Crop extends AuditableEntity { // 재배중인 작물
     @OneToMany(mappedBy = "crop")
     private List<CropImage> cropImages;
 
-    public Crop(FarmerProfile farmerProfile) {
-        this.farmerProfile = farmerProfile;
+    public void setFarmerCrop(String cropName, String cropDescription) {
+        this.cropName = cropName;
+        this.cropDescription = cropDescription;
     }
 }

@@ -1,14 +1,12 @@
 package cmc.farmart.entity.farmer;
 
 import cmc.farmart.entity.AuditableEntity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,8 +20,4 @@ public class CropImage extends AuditableEntity {
 
     @Column(name = "crop_image_path")
     private String cropImageUrl;
-
-    public CropImage(Crop crop) {
-        this.crop = crop;
-    }
 }

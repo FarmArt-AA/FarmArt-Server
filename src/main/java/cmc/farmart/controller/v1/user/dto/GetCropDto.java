@@ -27,6 +27,9 @@ public class GetCropDto {
     @AllArgsConstructor
     public static class Crop {
 
+        @Schema(description = "작물 PK")
+        private Long cropId;
+
         @Schema(description = "작물 이름", required = true)
         private String cropName;
 
@@ -44,6 +47,10 @@ public class GetCropDto {
     @AllArgsConstructor
     public static class CropImage {
 
+        @Schema(description = "작물 사진 PK")
+        private Long cropImageId;
+
+        @Schema(description = "작물 사진 URL")
         private String cropImageUrl;
 
     }

@@ -44,6 +44,8 @@ public class User extends AuditableEntity {
     @Column(name = "refresh_token", nullable = false)
     private String refreshToken;
 
+    private Boolean deleted;
+
     public User(String userName, String userNickName, String email, String socialId, String profileImageUrl, String refreshToken, SocialType socialType, String phoneNumber, JobTitle jobTitle) {
         this.userName = userName;
         this.userNickName = userNickName;
@@ -54,6 +56,7 @@ public class User extends AuditableEntity {
         this.socialType = socialType;
         this.phoneNumber = phoneNumber;
         this.jobTitle = jobTitle;
+        this.deleted = false;
     }
 
     // 마이페이지 사용자 닉네임 변경 감지
