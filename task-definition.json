@@ -1,5 +1,5 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:ap-northeast-2:200559315145:task-definition/farmart-farmer-mypage-task:2",
+  "taskDefinitionArn": "arn:aws:ecs:ap-northeast-2:200559315145:task-definition/farmart-mypage-real-task:1",
   "containerDefinitions": [
     {
       "name": "farmart",
@@ -56,7 +56,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-create-group": "true",
-          "awslogs-group": "/ecs/farmart-farmer-mypage-task",
+          "awslogs-group": "/ecs/farmart-mypage-real-task",
           "awslogs-region": "ap-northeast-2",
           "awslogs-stream-prefix": "ecs"
         },
@@ -65,11 +65,11 @@
       "systemControls": []
     }
   ],
-  "family": "farmart-farmer-mypage-task",
+  "family": "farmart-mypage-real-task",
   "taskRoleArn": "arn:aws:iam::200559315145:role/heurit-ecs",
   "executionRoleArn": "arn:aws:iam::200559315145:role/ecsTaskExecutionRole",
   "networkMode": "awsvpc",
-  "revision": 2,
+  "revision": 1,
   "volumes": [],
   "status": "ACTIVE",
   "requiresAttributes": [
@@ -118,7 +118,7 @@
     "cpuArchitecture": "X86_64",
     "operatingSystemFamily": "LINUX"
   },
-  "registeredAt": "2022-10-12T13:34:10.537Z",
+  "registeredAt": "2022-10-12T14:23:07.945Z",
   "registeredBy": "arn:aws:iam::200559315145:root",
   "tags": [
     {
@@ -127,7 +127,7 @@
     },
     {
       "key": "ecs:taskDefinition:stackId",
-      "value": "arn:aws:cloudformation:ap-northeast-2:200559315145:stack/ECS-Console-V2-TaskDefinition-702c7588-5c59-447a-8720-c1bd61fbfbfa/8ac41580-4a32-11ed-a518-0ae9916d8ab4"
+      "value": "arn:aws:cloudformation:ap-northeast-2:200559315145:stack/ECS-Console-V2-TaskDefinition-e38b0270-39f5-45a6-a56e-f0b82128c79f/615a69e0-4a39-11ed-bef7-067e76f72ffe"
     }
   ]
 }

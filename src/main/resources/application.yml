@@ -10,7 +10,7 @@ spring:
   jpa:
     generate-ddl: true
     hibernate: # create: drop-create
-      ddl-auto: create
+      ddl-auto: update
       show-sql: true
   #      naming:
   #        naming_strategy: org.hibernate.cfg.ImprovedNamingStrategy
