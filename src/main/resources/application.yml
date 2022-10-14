@@ -6,6 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 30
+      max-lifetime: 17
 
   jpa:
     generate-ddl: true
