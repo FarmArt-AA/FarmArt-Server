@@ -9,5 +9,5 @@ import java.util.List;
 public interface CropImageRepository extends JpaRepository<CropImage, Long> {
     List<CropImage> findAllByCrop(Crop crop);
 
-    void deleteCropImageByCrop(Crop crop);
+    void deleteAllCropImageByCrop(Crop crop);
 }

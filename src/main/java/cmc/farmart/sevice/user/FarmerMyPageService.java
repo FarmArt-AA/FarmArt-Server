@@ -67,8 +67,8 @@ public class FarmerMyPageService {
 
         // TODO:: Need Code Refactoring
         FarmerProfile farmerProfile = farmerProfileRepository.findByUser(user).orElseThrow(() -> new FarmartException(Status.NOT_FOUND));
-        if(Objects.nonNull(farmerProfile.getFarmerProfileImagePath())) { // 서버로부터 이미지를 받은 이후부터는 s3 기존 이미지를 삭제하고 저장한다.
-            s3Service.delete(bucketName,farmerProfile.getFarmerProfileImagePath());
+        if (Objects.nonNull(farmerProfile.getFarmerProfileImagePath())) { // 서버로부터 이미지를 받은 이후부터는 s3 기존 이미지를 삭제하고 저장한다.
+            s3Service.delete(bucketName, farmerProfile.getFarmerProfileImagePath());
         }
         farmerProfile.setFarmerProfileImagePath(bucketKey);
 
@@ -268,12 +268,15 @@ public class FarmerMyPageService {
     public UpdateCropDto.Response updateFarmerCrop(UpdateCropDto.Request request) throws URISyntaxException {
         // 해당 작물을 찾는다.
         Crop crop = farmerCropRepository.findById(request.getCropId()).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_CROP));
+
+        // 수정하려는 작물의 작물명, 작물 설명을 수정한다.
         crop.setCropName(request.getCropName());
         crop.setCropDescription(request.getCropDescription());
         farmerCropRepository.save(crop);
 
 
-        List<CropImage> cropImages = cropImageRepository.findAllByCrop(crop);
+        List<CropImage> cropImages = cropImageRepository.findAllByCrop(crop); // Db에서 농작물의 이미지를 모두 가져온다.
+
         for (CropImage cropImage : cropImages) {
             try {
                 // 기존 DB 에서 buckey키를 가져와서 이미지를 s3에서 삭제한다.
@@ -282,47 +285,56 @@ public class FarmerMyPageService {
                 log.error(ex.getMessage());
             }
             // 기존 DB 항목들을 전체 삭제한다.
-            cropImageRepository.deleteCropImageByCrop(crop);
+            cropImageRepository.deleteAllCropImageByCrop(crop);
         }
 
-        // rquest를 통해 받은 MultipartFile을 다시 전체 업로드한다.
+
         ArrayList<CreateCropDto.CropImageURL> cropImageURLS = new ArrayList<>(); // 재배 중인 작물 사진을 담을 리스트
-        for (UpdateCropDto.CropImageFile cropImage : request.getCropImages()) {
-            checkCropImageMaxUploadSizeExceeded(cropImageURLS); // 재배 중인 작물 사진 (최대 3개) 추가
+        if (Objects.isNull(request.getCropImages())) { // request를 통해 받은 MultipartFile이 없다면 빈 리스트를 반환한다.
+            return UpdateCropDto.Response.builder()
+                    .cropId(crop.getId())
+                    .cropName(crop.getCropName())
+                    .cropDescription(crop.getCropDescription())
+                    .cropImages(cropImageURLS)
+                    .build();
+        } else { // rquest를 통해 받은 MultipartFile을 다시 전체 업로드한다.
+            for (UpdateCropDto.CropImageFile cropImage : request.getCropImages()) {
+                checkCropImageMaxUploadSizeExceeded(cropImageURLS); // 재배 중인 작물 사진 (최대 3개) 추가
 
-            verifyExistsFile(cropImage.getCropImageFile()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
+                verifyExistsFile(cropImage.getCropImageFile()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
 
-            String extension = getExtension(Objects.requireNonNull(cropImage.getCropImageFile().getOriginalFilename())); // 확장자 추출
+                String extension = getExtension(Objects.requireNonNull(cropImage.getCropImageFile().getOriginalFilename())); // 확장자 추출
 
-            verifyImageExtension(extension); // 이미지류 확장자만 가능하도록 검증
+                verifyImageExtension(extension); // 이미지류 확장자만 가능하도록 검증
 
-            String bucketKey = makeBucketKey(FARMAR_ORIGIN_S3_PREFIX_OBJECT_KEY, extension); // 새로운 버킷 키 생성
+                String bucketKey = makeBucketKey(FARMAR_ORIGIN_S3_PREFIX_OBJECT_KEY, extension); // 새로운 버킷 키 생성
 
-            try {
-                // 이미지 등록
-                s3Service.put(bucketName, bucketKey, cropImage.getCropImageFile().getInputStream());
-            } catch (Exception ex) {
-                s3Service.delete(bucketName, bucketKey);
-                log.error(ex.getMessage());
-                throw new FarmartException(Status.INTERNAL_SERVER_ERROR);
+                try {
+                    // 이미지 등록
+                    s3Service.put(bucketName, bucketKey, cropImage.getCropImageFile().getInputStream());
+                } catch (Exception ex) {
+                    s3Service.delete(bucketName, bucketKey);
+                    log.error(ex.getMessage());
+                    throw new FarmartException(Status.INTERNAL_SERVER_ERROR);
+                }
+
+                // DB에 buckeyKey를 저장한다. (작물 추가 로직과 동일)
+                CropImage newCropImage = CropImage.builder()
+                        .crop(crop)
+                        .cropImageUrl(bucketKey)
+                        .build();
+                cropImageRepository.save(newCropImage);
+
+                String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, bucketKey, presignedUrlExpireMillisecond);
+                CreateCropDto.CropImageURL cropImageUrl = CreateCropDto.CropImageURL.builder()
+                        .cropImageId(newCropImage.getId())
+                        .cropImageUrl(downloadUrl)
+                        .build();
+                cropImageURLS.add(cropImageUrl);
             }
 
-            // DB에 buckeyKey를 저장한다. (작물 추가 로직과 동일)
-            CropImage newCropImage = CropImage.builder()
-                    .crop(crop)
-                    .cropImageUrl(bucketKey)
-                    .build();
-            cropImageRepository.save(newCropImage);
-
-            String downloadUrl = s3Service.getPresignedUrl4Download(bucketName, bucketKey, presignedUrlExpireMillisecond);
-            CreateCropDto.CropImageURL cropImageUrl = CreateCropDto.CropImageURL.builder()
-                    .cropImageId(newCropImage.getId())
-                    .cropImageUrl(downloadUrl)
-                    .build();
-            cropImageURLS.add(cropImageUrl);
+            farmerCropRepository.save(crop);
         }
-
-        farmerCropRepository.save(crop);
 
         return UpdateCropDto.Response.builder()
                 .cropId(crop.getId())
@@ -363,7 +375,7 @@ public class FarmerMyPageService {
         List<FarmProfileImage> farmProfileImages = farmProfileImageRepository.findAll();
 
         // 이미지가 이미 3개라면 더이상 추가하지 못한다.
-        if(farmProfileImages.size() >= 3) throw new FarmartException(Status.MAX_UPLOAD_SIZE_EXCEEDED);
+        if (farmProfileImages.size() >= 3) throw new FarmartException(Status.MAX_UPLOAD_SIZE_EXCEEDED);
 
         verifyExistsFile(request.getFarmImageFile()); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
 
@@ -411,7 +423,7 @@ public class FarmerMyPageService {
 
     public GetFarmerProfileLinkDto.Response getFarmerProfileLinks(Long userId) {
         User user = getUserById(userId);
-        if(user.getJobTitle().equals(JobTitle.FARMER)) {
+        if (user.getJobTitle().equals(JobTitle.FARMER)) {
             FarmerProfile farmerProfile = getFarmerProfileByUser(user);
             List<ProfileLink> farmerProfileLinks = profileLinkRepository.findAllByFarmerProfile(farmerProfile);
 
@@ -423,7 +435,7 @@ public class FarmerMyPageService {
                                     .webSiteUrl(farmerProfileLink.getWebSiteUrl())
                                     .build()).collect(Collectors.toList()))
                     .build();
-        } else if(user.getJobTitle().equals(JobTitle.DESIGNER)) {
+        } else if (user.getJobTitle().equals(JobTitle.DESIGNER)) {
             // 디자이너의 프로필을 조회
             DesignerProfile designerProfile = getDesignerProfileByUser(user);
             List<ProfileLink> farmerProfileLinks = profileLinkRepository.findAllByDesignerProfile(designerProfile);
@@ -445,7 +457,7 @@ public class FarmerMyPageService {
         checkMaxProfileLinkAddSizeExceeded(profileLinkRepository.findAll().size() >= 2, Status.MAX_PROFILE_LINK_ADD_SIZE_EXCEEDED);
         User user = getUserById(request.getUserId());
 
-        if(user.getJobTitle().equals(JobTitle.FARMER)) {
+        if (user.getJobTitle().equals(JobTitle.FARMER)) {
             FarmerProfile farmerProfile = getFarmerProfileByUser(user);
             ProfileLink farmerProfileLink = ProfileLink.builder()
                     .farmerProfile(farmerProfile)
@@ -455,10 +467,10 @@ public class FarmerMyPageService {
             profileLinkRepository.save(farmerProfileLink);
 
             return CreateFarmerProfileLinkDto.Response.builder()
-                .linkTitle(farmerProfileLink.getLinkTitle())
-                .webSiteUrl(farmerProfileLink.getWebSiteUrl())
+                    .linkTitle(farmerProfileLink.getLinkTitle())
+                    .webSiteUrl(farmerProfileLink.getWebSiteUrl())
                     .build();
-        } else if(user.getJobTitle().equals(JobTitle.DESIGNER)) {
+        } else if (user.getJobTitle().equals(JobTitle.DESIGNER)) {
             DesignerProfile designerProfile = getDesignerProfileByUser(user);
             ProfileLink designerProfileLink = ProfileLink.builder()
                     .designerProfile(designerProfile)
@@ -478,14 +490,14 @@ public class FarmerMyPageService {
     }
 
     private void checkMaxProfileLinkAddSizeExceeded(boolean profileLinkRepository, Status maxProfileLinkAddSizeExceeded) {
-        if(profileLinkRepository) {
+        if (profileLinkRepository) {
             throw new FarmartException(maxProfileLinkAddSizeExceeded);
         }
     }
 
     public UpdateFarmerProfileLinkDto.Response updateFarmerProfileLink(UpdateFarmerProfileLinkDto.Request request) {
         User user = getUserById(request.getUserId());
-        if(user.getJobTitle().equals(JobTitle.FARMER)) {
+        if (user.getJobTitle().equals(JobTitle.FARMER)) {
             FarmerProfile farmerProfile = getFarmerProfileByUser(user);
             ProfileLink farmerProfileLink = profileLinkRepository.findByFarmerProfileAndId(farmerProfile, request.getLinkId()).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_FARMER_PROFILE_LINK));
             farmerProfileLink.setLinkTitle(request.getLinkTitle());
@@ -498,7 +510,7 @@ public class FarmerMyPageService {
                     .webSiteUrl(farmerProfileLink.getWebSiteUrl())
                     .build();
 
-        } else if(user.getJobTitle().equals(JobTitle.DESIGNER)) {
+        } else if (user.getJobTitle().equals(JobTitle.DESIGNER)) {
             DesignerProfile designerProfile = getDesignerProfileByUser(user);
             ProfileLink designerProfileLink = profileLinkRepository.findByDesignerProfileAndId(designerProfile, request.getLinkId()).orElseThrow(() -> new FarmartException(Status.NOT_EXISTS_FARMER_PROFILE_LINK));
             designerProfileLink.setLinkTitle(request.getLinkTitle());
