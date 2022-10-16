@@ -1,5 +1,7 @@
 package cmc.farmart.sevice.user;
 
+import cmc.farmart.common.exception.FarmartException;
+import cmc.farmart.common.exception.Status;
 import cmc.farmart.controller.v1.user.dto.KakaoUserInfoVo;
 import cmc.farmart.domain.user.ConfirmationType;
 import cmc.farmart.domain.user.SocialType;
@@ -64,5 +66,9 @@ public class UserService {
 
     public void updateUserBySocialData(KakaoUserInfoVo kakaoUserInfoVo) {
         userRepository.updateUserBySocialIdAndSocialType(kakaoUserInfoVo.getEmail(), kakaoUserInfoVo.getProfileImageUrl(), kakaoUserInfoVo.getRefreshToken(), kakaoUserInfoVo.getSocialId(), kakaoUserInfoVo.getSocialType());
+    }
+
+    public User getUserById(final Long userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new FarmartException(Status.ACCESS_DENIED));
     }
 }

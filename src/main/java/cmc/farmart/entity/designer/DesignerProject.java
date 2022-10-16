@@ -1,6 +1,8 @@
 package cmc.farmart.entity.designer;
 
 import cmc.farmart.entity.AuditableEntity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +11,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "A_DESIGNER_PROJECT")
 @Entity
@@ -33,7 +37,4 @@ public class DesignerProject extends AuditableEntity {
     @OneToMany(mappedBy = "designerProject")
     private List<DesignerProjectImage> designerProjectImages;
 
-    public DesignerProject(DesignerProfile designerProfile) {
-        this.designerProfile = designerProfile;
-    }
 }

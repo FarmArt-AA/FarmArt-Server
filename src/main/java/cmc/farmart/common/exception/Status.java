@@ -38,6 +38,7 @@ public enum Status {
     MAX_PROFILE_LINK_ADD_SIZE_EXCEEDED(400, "P9M4Y", "최대 등록 가능한 작물 개수 초과"),
     NOT_EXISTS_CROP(400, "CR7E9", "존재하지 않는 작물입니다."),
     NOT_EXISTS_FARMER_PROFILE(400, "C0FM9", "존재하지 않는 농부 프로필입니다."),
+    NOT_EXISTS_DESIGNER_PROFILE(400, "C0FM9", "존재하지 않는 디자이너 프로필입니다."),
     NOT_EXISTS_FARMER_PROFILE_LINK(400, "F7UL0", "존재하지 않는 농부 링크입니다."),
     NOT_EXISTS_FARMER(400, "F7M1R", "존재하지 않는 농부 정보입니다."),
     NOT_EXISTS_DESIGNER(400, "D2E5R", "존재하지 않는 디자이너 정봉보입니다."),

@@ -34,7 +34,7 @@ public class FarmerMyPageController {
 
     @Operation(summary = "농부 프로필 조회: [닉네임, 농가명, 농사 지역, 소개]")
     @GetMapping("/{userId}/introduce")
-    public ResponseEntity<GetFarmerProfileIntroduceDto.Response> getFarmerProfileIntroduce(@Parameter(description = "사용자 PK") @PathVariable String userId) {
+    public ResponseEntity<GetFarmerProfileIntroduceDto.Response> getFarmerProfileIntroduce(@Parameter(description = "사용자 PK") @PathVariable Long userId) {
         return ResponseEntity.status(HttpStatus.OK).body(farmerMyPageService.getFarmerProfileIntroduce(userId));
     }
 

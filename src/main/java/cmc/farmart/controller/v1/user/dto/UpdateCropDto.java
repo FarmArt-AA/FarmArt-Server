@@ -34,7 +34,7 @@ public class UpdateCropDto {
     @Data
     public static class CropImageFile {
 
-        @Schema(description = "작물 사진 URL")
+        @Schema(description = "작물 사진 이미지 파일")
         private MultipartFile cropImageFile;
     }
 
@@ -54,7 +54,7 @@ public class UpdateCropDto {
         private String cropDescription;
 
         @Schema(description = "작물 사진 목록", required = false)
-        private List<CreateCropDto.CropImageURL> cropImages;
+        private List<CropImageURL> cropImages;
 
     }
 

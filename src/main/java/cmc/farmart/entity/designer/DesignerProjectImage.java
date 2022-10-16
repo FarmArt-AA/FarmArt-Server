@@ -1,12 +1,16 @@
 package cmc.farmart.entity.designer;
 
 import cmc.farmart.entity.AuditableEntity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "A_DESIGNER_PROJECT_IMAGE")
 @Entity

@@ -1,8 +1,12 @@
 package cmc.farmart.sevice;
 
+import cmc.farmart.common.exception.FarmartException;
+import cmc.farmart.common.exception.Status;
+import cmc.farmart.entity.FileExtensionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -17,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,6 +34,8 @@ public class S3Service {
 
     public Boolean put(final String bucketName, final String bucketKey, final InputStream is) throws IOException {
         try {
+
+
             PutObjectRequest objectRequest = PutObjectRequest.builder()
                     .acl(ObjectCannedACL.PRIVATE)
                     .bucket(bucketName)
@@ -77,5 +85,36 @@ public class S3Service {
             log.error(ex.getMessage());
             throw ex;
         }
+    }
+
+    public String getBucketKey(MultipartFile request, String ORIGIN_S3_PREFIX_OBJECT_KEY) {
+        verifyExistsFile(request); // 이미지가 없다면 Exception을 발생한다. (이미지 필수)
+        String extension = getExtension(Objects.requireNonNull(request.getOriginalFilename())); // 확장자 추출
+        verifyImageExtension(extension); // 이미지류 확장자만 가능하도록 검증
+        String bucketKey = makeBucketKey(ORIGIN_S3_PREFIX_OBJECT_KEY, extension); // 새로운 버킷 키 생성
+
+        return bucketKey;
+    }
+
+    private void verifyExistsFile(MultipartFile file) {
+        if (Objects.isNull(file) || file.isEmpty()) {
+            throw new FarmartException(Status.REQUIRE_FILE);
+        }
+    }
+
+    private void verifyImageExtension(final String extension) {
+        if (extension == null || FileExtensionType.IMAGE.stream().noneMatch(ext -> ext.equals(extension))) {
+            throw new FarmartException(Status.IMAGE_FILE_ONLY);
+        }
+    }
+
+    private String makeBucketKey(final String s3PrefixObjectKey, final String fileExtension) { // key 생성
+        return s3PrefixObjectKey + UUID.randomUUID() + "." + fileExtension;
+    }
+
+
+    private String getExtension(final String fileName) {
+        int dotIndex = fileName.lastIndexOf(".");
+        return fileName.substring(dotIndex + 1).toLowerCase();
     }
 }

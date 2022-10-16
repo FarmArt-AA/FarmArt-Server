@@ -5,11 +5,13 @@ import cmc.farmart.entity.ProfileLink;
 import cmc.farmart.entity.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @Table(name = "A_DESIGNER_PROFILE")
 @Entity
@@ -26,7 +28,7 @@ public class DesignerProfile extends AuditableEntity {
     private String designerProfileTitle; // 프로필 제목
 
     @Column(name = "designer_profile_profile_introduce")
-    private String designerProfileProfileIntroduce; // 소개
+    private String designerProfileIntroduce; // 소개
 
     @OneToMany(mappedBy = "designerWorkAreaType")
     private List<DesignerWorkArea> designerWorkAreaTypes; // 작업분야
@@ -39,5 +41,10 @@ public class DesignerProfile extends AuditableEntity {
 
     public DesignerProfile(User user) {
         this.user = user;
+    }
+
+    public void setDesignerProfile(String designerProfileTitle, String designerProfileIntroduce) {
+        this.designerProfileTitle = designerProfileTitle;
+        this.designerProfileIntroduce = designerProfileIntroduce;
     }
 }
